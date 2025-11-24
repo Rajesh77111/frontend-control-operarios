@@ -2,94 +2,251 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Control de ingreso y salida - EMPUVILLA</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Un estilo sencillo para que se vea bonito -->
+  <title>Gestión de Empresas Audiovisuales - EMPUVILLA</title>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f3f4f6;
-      padding: 20px;
-    }
-    .contenedor {
-      max-width: 400px;
-      margin: 0 auto;
-      background: #ffffff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    h1 {
-      font-size: 20px;
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    select, input, button {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
+    /* -------- ESTILOS GENERALES -------- */
+    * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-    button {
-      margin-top: 15px;
-      font-weight: bold;
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #e0f4ff 0%, #f4f7fb 45%, #e8edf5 100%);
+      color: #1f2933;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .app-wrapper {
+      width: 100%;
+      max-width: 720px;
+    }
+
+    /* -------- ENCABEZADO CON LOGO -------- */
+    .app-header {
+      margin-bottom: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 18px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+      backdrop-filter: blur(10px);
+    }
+
+    .logo-empuvilla {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+    }
+
+    .brand-text h1 {
+      font-size: 1.4rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #0b7285;
+    }
+
+    .subtitle {
+      font-size: 0.88rem;
+      color: #6b7280;
+    }
+
+    /* -------- TARJETA PRINCIPAL -------- */
+    .card {
+      margin-top: 20px;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 22px 20px 24px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.20);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      margin-bottom: 4px;
+      color: #111827;
+    }
+
+    .card-description {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 18px;
+    }
+
+    /* -------- FORMULARIO -------- */
+    .form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #334155;
+    }
+
+    input[type="text"] {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #cbd5f5;
+      background-color: #f9fafb;
+      font-size: 0.95rem;
+      transition: all 0.18s ease;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #0ea5e9;
+      background-color: #ffffff;
+      box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.25);
+    }
+
+    /* -------- BOTONES -------- */
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 9px 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
       cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.18s;
     }
-    .info {
-      margin-top: 10px;
-      font-size: 14px;
-      color: #555;
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
     }
-    .ok {
-      color: green;
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0ea5e9, #22c1c3);
+      color: #ffffff;
+      box-shadow: 0 12px 25px rgba(14, 165, 233, 0.45);
     }
-    .error {
-      color: red;
+
+    .btn-secondary {
+      background: #e5f3ff;
+      color: #0369a1;
+    }
+
+    .btn-warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .btn-danger {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    /* -------- MENSAJE RESPUESTA -------- */
+    .mensaje {
+      margin-top: 14px;
+      font-size: 0.9rem;
+      color: #0f172a;
+      min-height: 18px;
+    }
+
+    /* -------- FOOTER -------- */
+    .app-footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #6b7280;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .credits {
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    /* -------- RESPONSIVE -------- */
+    @media (max-width: 600px) {
+      .button-row {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
+
 <body>
-  <div class="contenedor">
-    <h1>Control de Operarios</h1>
+  <div class="app-wrapper">
 
-    <form id="formRegistro">
-      <label for="nombreOperario">Operario</label>
-      <select id="nombreOperario" required>
-        <option value="">Seleccione...</option>
-        <option value="Hernan Aragon">Hernan Aragon</option>
-        <option value="Rossa Viafara">Rossa Viafara</option>
-        <option value="Jaiver Casaran">Jaiver Casaran</option>
-        <option value="Arnoldo Camacho">Arnoldo Camacho</option>
-      </select>
+    <header class="app-header">
+      <div class="brand">
+        <img src="logo-empuvilla.png" class="logo-empuvilla">
+        <div class="brand-text">
+          <h1>EMPUVILLA S.A. E.S.P.</h1>
+          <p class="subtitle">Gestión de Empresas Audiovisuales</p>
+        </div>
+      </div>
+    </header>
 
-      <label for="tipo">Tipo de registro</label>
-      <select id="tipo" required>
-        <option value="">Seleccione...</option>
-        <option value="ingreso">Ingreso</option>
-        <option value="salida">Salida</option>
-      </select>
+    <main class="card">
+      <h2 class="card-title">Panel de administración</h2>
+      <p class="card-description">Crear, buscar, actualizar y eliminar empresas.</p>
 
-      <label>Hora actual</label>
-      <input type="text" id="horaActual" readonly />
+      <form id="formEmpresa" class="form">
+        <div class="form-group">
+          <label for="nombreEmpresa">Nombre de la empresa</label>
+          <input type="text" id="nombreEmpresa" placeholder="Ej: VisualPro Films">
+        </div>
 
-      <label>Estado de ubicación (GPS)</label>
-      <div id="estadoGps" class="info">Solicitando ubicación...</div>
+        <div class="form-group">
+          <label for="nit">NIT</label>
+          <input type="text" id="nit" placeholder="Ej: 900123456-1">
+        </div>
 
-      <!-- Campos ocultos donde guardamos lat y lng -->
-      <input type="hidden" id="lat" />
-      <input type="hidden" id="lng" />
+        <div class="form-group">
+          <label for="telefono">Teléfono</label>
+          <input type="text" id="telefono" placeholder="Ej: 3101234567">
+        </div>
 
-      <button type="submit">Registrar</button>
-    </form>
+        <div class="button-row">
+          <button type="button" class="btn btn-primary" onclick="guardarEmpresa()">Guardar</button>
+          <button type="button" class="btn btn-secondary" onclick="buscarEmpresa()">Buscar</button>
+          <button type="button" class="btn btn-warning" onclick="actualizarEmpresa()">Actualizar</button>
+          <button type="button" class="btn btn-danger" onclick="eliminarEmpresa()">Eliminar</button>
+        </div>
+      </form>
 
-    <div id="mensajeRespuesta" class="info"></div>
+      <p id="mensaje" class="mensaje"></p>
+    </main>
+
+    <footer class="app-footer">
+      <small>Fase 4 – Bases de Datos Multimedia</small>
+      <small class="credits">Derechos de creación Multivela Studio & Rajesh Studio</small>
+    </footer>
+
   </div>
 
-  <script src="script.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
