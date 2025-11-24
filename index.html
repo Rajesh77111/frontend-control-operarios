@@ -2,10 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Gestión de Empresas Audiovisuales - EMPUVILLA</title>
+  <title>Control de Operarios PTAP - EMPUVILLA</title>
 
+  <!-- Estilos incrustados -->
   <style>
-    /* -------- ESTILOS GENERALES -------- */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -13,7 +13,7 @@
     }
 
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: system-ui, -Apple-System, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: radial-gradient(circle at top, #e0f4ff 0%, #f4f7fb 45%, #e8edf5 100%);
       color: #1f2933;
       min-height: 100vh;
@@ -28,7 +28,7 @@
       max-width: 720px;
     }
 
-    /* -------- ENCABEZADO CON LOGO -------- */
+    /* ENCABEZADO */
     .app-header {
       margin-bottom: 20px;
     }
@@ -45,24 +45,24 @@
     }
 
     .logo-empuvilla {
-      width: 72px;
-      height: 72px;
+      width: 70px;
+      height: 70px;
       object-fit: contain;
     }
 
     .brand-text h1 {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: #0b7285;
     }
 
-    .subtitle {
-      font-size: 0.88rem;
+    .brand-text .subtitle {
+      font-size: 0.9rem;
       color: #6b7280;
     }
 
-    /* -------- TARJETA PRINCIPAL -------- */
+    /* TARJETA PRINCIPAL */
     .card {
       margin-top: 20px;
       background: #ffffff;
@@ -73,7 +73,7 @@
     }
 
     .card-title {
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       margin-bottom: 4px;
       color: #111827;
     }
@@ -84,7 +84,7 @@
       margin-bottom: 18px;
     }
 
-    /* -------- FORMULARIO -------- */
+    /* FORMULARIO */
     .form {
       display: flex;
       flex-direction: column;
@@ -103,7 +103,7 @@
       color: #334155;
     }
 
-    input[type="text"] {
+    input[type="text"], select {
       padding: 10px 12px;
       border-radius: 10px;
       border: 1px solid #cbd5f5;
@@ -112,14 +112,15 @@
       transition: all 0.18s ease;
     }
 
-    input[type="text"]:focus {
+    input[type="text"]:focus,
+    select:focus {
       outline: none;
       border-color: #0ea5e9;
       background-color: #ffffff;
       box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.25);
     }
 
-    /* -------- BOTONES -------- */
+    /* BOTONES */
     .button-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -163,7 +164,7 @@
       color: #b91c1c;
     }
 
-    /* -------- MENSAJE RESPUESTA -------- */
+    /* MENSAJE */
     .mensaje {
       margin-top: 14px;
       font-size: 0.9rem;
@@ -171,7 +172,7 @@
       min-height: 18px;
     }
 
-    /* -------- FOOTER -------- */
+    /* FOOTER */
     .app-footer {
       margin-top: 20px;
       text-align: center;
@@ -182,12 +183,12 @@
       gap: 3px;
     }
 
-    .credits {
+    .app-footer .credits {
       font-weight: 600;
       color: #0f172a;
     }
 
-    /* -------- RESPONSIVE -------- */
+    /* RESPONSIVE */
     @media (max-width: 600px) {
       .button-row {
         grid-template-columns: 1fr;
@@ -195,45 +196,60 @@
     }
   </style>
 </head>
-
 <body>
   <div class="app-wrapper">
 
     <header class="app-header">
       <div class="brand">
-        <img src="logo-empuvilla.png" class="logo-empuvilla">
+        <!-- Asegúrate de tener el archivo logo-empuvilla.png en la misma carpeta -->
+        <img src="logo-empuvilla.png" alt="Logo EMPUVILLA S.A. E.S.P." class="logo-empuvilla">
         <div class="brand-text">
           <h1>EMPUVILLA S.A. E.S.P.</h1>
-          <p class="subtitle">Gestión de Empresas Audiovisuales</p>
+          <p class="subtitle">Control de ingreso y salida de operarios - PTAP</p>
         </div>
       </div>
     </header>
 
     <main class="card">
-      <h2 class="card-title">Panel de administración</h2>
-      <p class="card-description">Crear, buscar, actualizar y eliminar empresas.</p>
+      <h2 class="card-title">Registro de operarios</h2>
+      <p class="card-description">
+        Diligencie la información del operario para llevar el control de turnos en la PTAP.
+      </p>
 
       <form id="formEmpresa" class="form">
         <div class="form-group">
-          <label for="nombreEmpresa">Nombre de la empresa</label>
-          <input type="text" id="nombreEmpresa" placeholder="Ej: VisualPro Films">
+          <!-- Mantengo el id nombreEmpresa para que siga funcionando con app.js -->
+          <label for="nombreEmpresa">Nombre del operario</label>
+          <input type="text" id="nombreEmpresa" placeholder="Ej: Hernán Aragón">
         </div>
 
         <div class="form-group">
-          <label for="nit">NIT</label>
-          <input type="text" id="nit" placeholder="Ej: 900123456-1">
+          <!-- Mantengo el id nit por compatibilidad con app.js -->
+          <label for="nit">Documento / Código del operario</label>
+          <input type="text" id="nit" placeholder="Ej: 1234567890">
         </div>
 
         <div class="form-group">
-          <label for="telefono">Teléfono</label>
-          <input type="text" id="telefono" placeholder="Ej: 3101234567">
+          <!-- Mantengo el id telefono por compatibilidad, pero lo uso como observación -->
+          <label for="telefono">Observaciones (ingreso / salida, turno, etc.)</label>
+          <input type="text" id="telefono" placeholder="Ej: Ingreso turno mañana, apoyo en floculadores">
+        </div>
+
+        <!-- Campo opcional solo visual, el JS actual no lo usa pero sirve en la interfaz -->
+        <div class="form-group">
+          <label for="tipoRegistro">Tipo de registro</label>
+          <select id="tipoRegistro">
+            <option value="">Seleccione...</option>
+            <option value="ingreso">Ingreso</option>
+            <option value="salida">Salida</option>
+          </select>
         </div>
 
         <div class="button-row">
-          <button type="button" class="btn btn-primary" onclick="guardarEmpresa()">Guardar</button>
-          <button type="button" class="btn btn-secondary" onclick="buscarEmpresa()">Buscar</button>
-          <button type="button" class="btn btn-warning" onclick="actualizarEmpresa()">Actualizar</button>
-          <button type="button" class="btn btn-danger" onclick="eliminarEmpresa()">Eliminar</button>
+          <button type="button" class="btn btn-primary" onclick="guardarEmpresa()">Guardar registro</button>
+          <button type="button" class="btn btn-secondary" onclick="buscarEmpresa()">Buscar por documento</button>
+          <button type="button" class="btn btn-warning" onclick="actualizarEmpresa()">Actualizar registro</button>
+          <button type="button" class="btn btn-danger" onclick="eliminarEmpresa()">Eliminar registro</button>
         </div>
       </form>
 
@@ -241,12 +257,13 @@
     </main>
 
     <footer class="app-footer">
-      <small>Fase 4 – Bases de Datos Multimedia</small>
-      <small class="credits">Derechos de creación Multivela Studio & Rajesh Studio</small>
+      <small>Control de operarios PTAP – EMPUVILLA S.A. E.S.P.</small>
+      <small class="credits">Derechos de creación Multivela Studio &amp; Rajesh Studio</small>
     </footer>
-
   </div>
 
+  <!-- Se mantiene tu lógica original -->
   <script src="app.js"></script>
 </body>
 </html>
+
