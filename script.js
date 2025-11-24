@@ -93,6 +93,7 @@ formRegistro.addEventListener('submit', async (e) => {
     }
 
     // Éxito
+    mensajeRespuestaDiv.style.display = 'block';
    mensajeRespuestaDiv.textContent = '✅ REGISTRO GUARDADO EXITOSAMENTE';
 mensajeRespuestaDiv.className = 'info ok';
 mensajeRespuestaDiv.style.fontSize = '18px';
@@ -115,4 +116,5 @@ setTimeout(() => {
     mensajeRespuestaDiv.className = 'info error';
   }
 });
+
 
