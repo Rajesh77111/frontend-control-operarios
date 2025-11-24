@@ -2,268 +2,95 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Control de Operarios PTAP - EMPUVILLA</title>
-
-  <!-- Estilos incrustados -->
+  <title>Control de ingreso y salida - EMPUVILLA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Un estilo sencillo para que se vea bonito -->
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
     body {
-      font-family: system-ui, -Apple-System, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #e0f4ff 0%, #f4f7fb 45%, #e8edf5 100%);
-      color: #1f2933;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
       padding: 20px;
     }
-
-    .app-wrapper {
-      width: 100%;
-      max-width: 720px;
-    }
-
-    /* ENCABEZADO */
-    .app-header {
-      margin-bottom: 20px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 14px 18px;
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 18px;
-      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
-      backdrop-filter: blur(10px);
-    }
-
-    .logo-empuvilla {
-      width: 70px;
-      height: 70px;
-      object-fit: contain;
-    }
-
-    .brand-text h1 {
-      font-size: 1.3rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: #0b7285;
-    }
-
-    .brand-text .subtitle {
-      font-size: 0.9rem;
-      color: #6b7280;
-    }
-
-    /* TARJETA PRINCIPAL */
-    .card {
-      margin-top: 20px;
+    .contenedor {
+      max-width: 400px;
+      margin: 0 auto;
       background: #ffffff;
-      border-radius: 20px;
-      padding: 22px 20px 24px;
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.20);
-      border: 1px solid rgba(148, 163, 184, 0.22);
-    }
-
-    .card-title {
-      font-size: 1.15rem;
-      margin-bottom: 4px;
-      color: #111827;
-    }
-
-    .card-description {
-      font-size: 0.9rem;
-      color: #6b7280;
-      margin-bottom: 18px;
-    }
-
-    /* FORMULARIO */
-    .form {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    label {
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #334155;
-    }
-
-    input[type="text"], select {
-      padding: 10px 12px;
+      padding: 20px;
       border-radius: 10px;
-      border: 1px solid #cbd5f5;
-      background-color: #f9fafb;
-      font-size: 0.95rem;
-      transition: all 0.18s ease;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-
-    input[type="text"]:focus,
-    select:focus {
-      outline: none;
-      border-color: #0ea5e9;
-      background-color: #ffffff;
-      box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.25);
-    }
-
-    /* BOTONES */
-    .button-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 6px;
-    }
-
-    .btn {
-      border: none;
-      border-radius: 999px;
-      padding: 9px 10px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.18s;
-    }
-
-    .btn:active {
-      transform: translateY(1px);
-      box-shadow: none;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #0ea5e9, #22c1c3);
-      color: #ffffff;
-      box-shadow: 0 12px 25px rgba(14, 165, 233, 0.45);
-    }
-
-    .btn-secondary {
-      background: #e5f3ff;
-      color: #0369a1;
-    }
-
-    .btn-warning {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .btn-danger {
-      background: #fee2e2;
-      color: #b91c1c;
-    }
-
-    /* MENSAJE */
-    .mensaje {
-      margin-top: 14px;
-      font-size: 0.9rem;
-      color: #0f172a;
-      min-height: 18px;
-    }
-
-    /* FOOTER */
-    .app-footer {
-      margin-top: 20px;
+    h1 {
+      font-size: 20px;
       text-align: center;
-      font-size: 0.8rem;
-      color: #6b7280;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
+      margin-bottom: 10px;
     }
-
-    .app-footer .credits {
-      font-weight: 600;
-      color: #0f172a;
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
     }
-
-    /* RESPONSIVE */
-    @media (max-width: 600px) {
-      .button-row {
-        grid-template-columns: 1fr;
-      }
+    select, input, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .info {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #555;
+    }
+    .ok {
+      color: green;
+    }
+    .error {
+      color: red;
     }
   </style>
 </head>
 <body>
-  <div class="app-wrapper">
+  <div class="contenedor">
+    <h1>Control de Operarios</h1>
 
-    <header class="app-header">
-      <div class="brand">
-        <!-- Asegúrate de tener el archivo logo-empuvilla.png en la misma carpeta -->
-        <img src="logo-empuvilla.png" alt="Logo EMPUVILLA S.A. E.S.P." class="logo-empuvilla">
-        <div class="brand-text">
-          <h1>EMPUVILLA S.A. E.S.P.</h1>
-          <p class="subtitle">Control de ingreso y salida de operarios - PTAP</p>
-        </div>
-      </div>
-    </header>
+    <form id="formRegistro">
+      <label for="nombreOperario">Operario</label>
+      <select id="nombreOperario" required>
+        <option value="">Seleccione...</option>
+        <option value="Hernan Aragon">Hernan Aragon</option>
+        <option value="Rossa Viafara">Rossa Viafara</option>
+        <option value="Jaiver Casaran">Jaiver Casaran</option>
+        <option value="Arnoldo Camacho">Arnoldo Camacho</option>
+      </select>
 
-    <main class="card">
-      <h2 class="card-title">Registro de operarios</h2>
-      <p class="card-description">
-        Diligencie la información del operario para llevar el control de turnos en la PTAP.
-      </p>
+      <label for="tipo">Tipo de registro</label>
+      <select id="tipo" required>
+        <option value="">Seleccione...</option>
+        <option value="ingreso">Ingreso</option>
+        <option value="salida">Salida</option>
+      </select>
 
-      <form id="formEmpresa" class="form">
-        <div class="form-group">
-          <!-- Mantengo el id nombreEmpresa para que siga funcionando con app.js -->
-          <label for="nombreEmpresa">Nombre del operario</label>
-          <input type="text" id="nombreEmpresa" placeholder="Ej: Hernán Aragón">
-        </div>
+      <label>Hora actual</label>
+      <input type="text" id="horaActual" readonly />
 
-        <div class="form-group">
-          <!-- Mantengo el id nit por compatibilidad con app.js -->
-          <label for="nit">Documento / Código del operario</label>
-          <input type="text" id="nit" placeholder="Ej: 1234567890">
-        </div>
+      <label>Estado de ubicación (GPS)</label>
+      <div id="estadoGps" class="info">Solicitando ubicación...</div>
 
-        <div class="form-group">
-          <!-- Mantengo el id telefono por compatibilidad, pero lo uso como observación -->
-          <label for="telefono">Observaciones (ingreso / salida, turno, etc.)</label>
-          <input type="text" id="telefono" placeholder="Ej: Ingreso turno mañana, apoyo en floculadores">
-        </div>
+      <!-- Campos ocultos donde guardamos lat y lng -->
+      <input type="hidden" id="lat" />
+      <input type="hidden" id="lng" />
 
-        <!-- Campo opcional solo visual, el JS actual no lo usa pero sirve en la interfaz -->
-        <div class="form-group">
-          <label for="tipoRegistro">Tipo de registro</label>
-          <select id="tipoRegistro">
-            <option value="">Seleccione...</option>
-            <option value="ingreso">Ingreso</option>
-            <option value="salida">Salida</option>
-          </select>
-        </div>
+      <button type="submit">Registrar</button>
+    </form>
 
-        <div class="button-row">
-          <button type="button" class="btn btn-primary" onclick="guardarEmpresa()">Guardar registro</button>
-          <button type="button" class="btn btn-secondary" onclick="buscarEmpresa()">Buscar por documento</button>
-          <button type="button" class="btn btn-warning" onclick="actualizarEmpresa()">Actualizar registro</button>
-          <button type="button" class="btn btn-danger" onclick="eliminarEmpresa()">Eliminar registro</button>
-        </div>
-      </form>
-
-      <p id="mensaje" class="mensaje"></p>
-    </main>
-
-    <footer class="app-footer">
-      <small>Control de operarios PTAP – EMPUVILLA S.A. E.S.P.</small>
-      <small class="credits">Derechos de creación Multivela Studio &amp; Rajesh Studio</small>
-    </footer>
+    <div id="mensajeRespuesta" class="info"></div>
   </div>
 
-  <!-- Se mantiene tu lógica original -->
-  <script src="app.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
 
