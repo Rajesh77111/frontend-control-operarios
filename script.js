@@ -93,8 +93,18 @@ formRegistro.addEventListener('submit', async (e) => {
     }
 
     // Éxito
-    mensajeRespuestaDiv.textContent = json.mensaje;
-    mensajeRespuestaDiv.className = 'info ok';
+   mensajeRespuestaDiv.textContent = '✅ REGISTRO GUARDADO EXITOSAMENTE';
+mensajeRespuestaDiv.className = 'info ok';
+mensajeRespuestaDiv.style.fontSize = '18px';
+mensajeRespuestaDiv.style.fontWeight = 'bold';
+mensajeRespuestaDiv.style.textAlign = 'center';
+mensajeRespuestaDiv.style.padding = '20px';
+
+// Opcional: limpiar el formulario después de 3 segundos
+setTimeout(() => {
+  document.getElementById('tipo').value = '';
+  mensajeRespuestaDiv.style.display = 'none';
+}, 3000);
 
     // Opcional: limpiar solo el tipo
     document.getElementById('tipo').value = '';
@@ -105,3 +115,4 @@ formRegistro.addEventListener('submit', async (e) => {
     mensajeRespuestaDiv.className = 'info error';
   }
 });
+
