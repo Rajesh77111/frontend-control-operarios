@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Control de ingreso y salida - EMPUVILLA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Un estilo sencillo para que se vea bonito -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      padding: 20px;
+    }
+    .contenedor {
+      max-width: 400px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 20px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    select, input, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .info {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #555;
+    }
+    .ok {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="contenedor">
+    <h1>Control de Operarios</h1>
+
+    <form id="formRegistro">
+      <label for="nombreOperario">Operario</label>
+      <select id="nombreOperario" required>
+        <option value="">Seleccione...</option>
+        <option value="Hernan Aragon">Hernan Aragon</option>
+        <option value="Rossa Viafara">Rossa Viafara</option>
+        <option value="Jaiver Casaran">Jaiver Casaran</option>
+        <option value="Arnoldo Camacho">Arnoldo Camacho</option>
+      </select>
+
+      <label for="tipo">Tipo de registro</label>
+      <select id="tipo" required>
+        <option value="">Seleccione...</option>
+        <option value="ingreso">Ingreso</option>
+        <option value="salida">Salida</option>
+      </select>
+
+      <label>Hora actual</label>
+      <input type="text" id="horaActual" readonly />
+
+      <label>Estado de ubicación (GPS)</label>
+      <div id="estadoGps" class="info">Solicitando ubicación...</div>
+
+      <!-- Campos ocultos donde guardamos lat y lng -->
+      <input type="hidden" id="lat" />
+      <input type="hidden" id="lng" />
+
+      <button type="submit">Registrar</button>
+    </form>
+
+    <div id="mensajeRespuesta" class="info"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
