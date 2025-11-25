@@ -16,9 +16,6 @@ const latInput = document.getElementById('lat');
 const lngInput = document.getElementById('lng');
 const formRegistro = document.getElementById('formRegistro');
 const mensajeRespuestaDiv = document.getElementById('mensajeRespuesta');
-const tipoSelect = document.getElementById('tipo');
-const labelJustificacion = document.getElementById('labelJustificacion');
-const justificacionExtraTextarea = document.getElementById('justificacionExtra');
 
 // 1. Actualizar hora en el formulario cada segundo
 function actualizarHora() {
@@ -199,6 +196,7 @@ formRegistro.addEventListener('submit', async (e) => {
     mensajeRespuestaDiv.style.fontWeight = 'bold';
   }
 });
+
 
 
 
