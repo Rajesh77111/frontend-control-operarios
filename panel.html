@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Panel de Reportes - EMPUVILLA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
+   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #0f172a;
@@ -12,31 +12,37 @@
       margin: 0;
       padding: 20px;
     }
+
     .contenedor {
       max-width: 900px;
       margin: 0 auto;
       background: #111827;
       border-radius: 16px;
       padding: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
     }
+
     h1 {
       margin-top: 0;
       font-size: 22px;
       margin-bottom: 10px;
     }
+
     .subtitulo {
       font-size: 14px;
       color: #9ca3af;
       margin-bottom: 20px;
     }
+
     label {
       display: block;
       margin-top: 10px;
       font-size: 14px;
       font-weight: 600;
     }
-    input, select {
+
+    input,
+    select {
       width: 100%;
       padding: 8px 10px;
       margin-top: 4px;
@@ -46,6 +52,7 @@
       color: #e5e7eb;
       font-size: 14px;
     }
+
     button {
       margin-top: 15px;
       padding: 10px 16px;
@@ -56,46 +63,52 @@
       font-weight: 600;
       cursor: pointer;
     }
+
     button:hover {
       background: #1d4ed8;
     }
+
     .seccion {
       margin-bottom: 20px;
       border-bottom: 1px solid #1f2937;
       padding-bottom: 15px;
     }
+
     .oculto {
       display: none;
     }
+
     .resultado {
       margin-top: 10px;
       font-size: 14px;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
       font-size: 13px;
     }
-    th, td {
+
+    th,
+    td {
       border: 1px solid #374151;
       padding: 6px 8px;
       text-align: center;
     }
+
     th {
       background: #1f2937;
     }
+
     .footer {
       margin-top: 15px;
       font-size: 12px;
       color: #9ca3af;
       text-align: center;
-      .header-panel {
-  display: flex;
-  justify-content: space-between; /* Título a la izquierda, logo a la derecha */
-  align-items: center;            /* Centrado verticalmente */
-  margin-bottom: 15px;
-}
+    }
+
+    /* === HEADER ELEGANTE CON LOGO A LA DERECHA === */
 
     .header-panel {
       display: flex;
@@ -142,14 +155,14 @@
       border-radius: 999px;
       background: radial-gradient(circle at 30% 0, rgba(59, 130, 246, 0.25), transparent 60%);
       border: 1px solid rgba(148, 163, 184, 0.5);
-      box-shadow: 
+      box-shadow:
         0 0 0 1px rgba(15, 23, 42, 0.9),
         0 15px 35px rgba(0, 0, 0, 0.75);
     }
 
     .logo-empuvilla {
       display: block;
-      height: 90px; /* aquí regulas qué tan grande se ve el logo */
+      height: 90px; /* sube o baja este valor para cambiar el tamaño del logo */
       width: auto;
       filter: drop-shadow(0 8px 18px rgba(15, 23, 42, 0.9));
     }
@@ -159,16 +172,17 @@
         flex-direction: column-reverse;
         align-items: flex-start;
       }
+
       .logo-wrapper {
         align-self: flex-end;
       }
+
       .header-text h1 {
         font-size: 20px;
       }
     }
-
-    }
   </style>
+
 </head>
 <body>
   <div class="contenedor">
@@ -239,6 +253,7 @@
   <script src="panel.js"></script>
 </body>
 </html>
+
 
 
 
