@@ -13,6 +13,7 @@ const mensajeLogin = document.getElementById('mensajeLogin');
 
 const btnLogin = document.getElementById('btnLogin');
 const btnConsultar = document.getElementById('btnConsultar');
+const btnEliminar = document.getElementById('btnEliminar');
 
 const operarioReporte = document.getElementById('operarioReporte');
 const fechaDesde = document.getElementById('fechaDesde');
@@ -20,6 +21,9 @@ const fechaHasta = document.getElementById('fechaHasta');
 
 const resumenDiv = document.getElementById('resumen');
 const tablaDetalleDiv = document.getElementById('tablaDetalle');
+
+
+
 
 // 1. LOGIN básico
 btnLogin.addEventListener('click', () => {
@@ -67,6 +71,49 @@ btnConsultar.addEventListener('click', async () => {
       resumenDiv.style.color = '#f97316';
       return;
     }
+btnEliminar.addEventListener('click', async () => {
+  const operario = operarioReporte.value;
+  const desde = fechaDesde.value;
+  const hasta = fechaHasta.value;
+
+  if (!operario || !desde || !hasta) {
+    resumenDiv.textContent = 'Debes seleccionar operario, fecha desde y hasta antes de eliminar.';
+    resumenDiv.style.color = '#f97316';
+    return;
+  }
+
+  const seguro = window.confirm(
+    `Vas a eliminar TODOS los registros de ${operario}\nentre ${desde} y ${hasta}.\n\nEsta acción no se puede deshacer.\n\n¿Estás seguro?`
+  );
+
+  if (!seguro) return;
+
+  try {
+    const resp = await fetch(`${API_URL}/api/registros-rango`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ operario, desde, hasta }),
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      resumenDiv.textContent = data.mensaje || 'Error al eliminar registros.';
+      resumenDiv.style.color = '#f97316';
+      return;
+    }
+
+    resumenDiv.style.color = '#22c55e';
+    resumenDiv.textContent = `Se eliminaron ${data.eliminados} registros de ${operario} entre ${desde} y ${hasta}.`;
+
+    // Limpiamos la tabla de detalle, porque ya no tiene sentido
+    tablaDetalleDiv.innerHTML = '';
+  } catch (err) {
+    console.error(err);
+    resumenDiv.textContent = 'No se pudo conectar con el servidor al intentar eliminar.';
+    resumenDiv.style.color = '#f97316';
+  }
+});
 
     // Mostrar resumen
     resumenDiv.style.color = '#e5e7eb';
@@ -119,3 +166,4 @@ btnConsultar.addEventListener('click', async () => {
     resumenDiv.style.color = '#f97316';
   }
 });
+
