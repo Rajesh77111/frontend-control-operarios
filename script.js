@@ -2,9 +2,9 @@
 const API_URL = 'https://backend-control-operarios.onrender.com';
 
 // ⚠️ IMPORTANTE: Cambia estas coordenadas por las de tu planta EMPUVILLA
-const PLANTA_LAT = 3.4516; // Latitud de tu planta
-const PLANTA_LNG = -76.5320; // Longitud de tu planta
-const RADIO_PERMITIDO_METROS = 30; // Radio en metros (debe coincidir con tu backend)
+const PLANTA_LAT = 3.17253; // Latitud de tu planta
+const PLANTA_LNG = -76.4588; // Longitud de tu planta
+const RADIO_PERMITIDO_METROS = 100; // Radio en metros (debe coincidir con tu backend)
 
 const horaActualInput = document.getElementById('horaActual');
 const estadoGpsDiv = document.getElementById('estadoGps');
@@ -174,5 +174,6 @@ formRegistro.addEventListener('submit', async (e) => {
     mensajeRespuestaDiv.style.fontWeight = 'bold';
   }
 });
+
 
 
