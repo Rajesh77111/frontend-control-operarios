@@ -6,12 +6,19 @@ const PLANTA_LAT = 3.17253; // Latitud de tu planta
 const PLANTA_LNG = -76.4588; // Longitud de tu planta
 const RADIO_PERMITIDO_METROS = 35; // Radio en metros (debe coincidir con tu backend)
 
+const tipoSelect = document.getElementById('tipo');
+const labelJustificacion = document.getElementById('labelJustificacion');
+const justificacionExtraTextarea = document.getElementById('justificacionExtra');
+
 const horaActualInput = document.getElementById('horaActual');
 const estadoGpsDiv = document.getElementById('estadoGps');
 const latInput = document.getElementById('lat');
 const lngInput = document.getElementById('lng');
 const formRegistro = document.getElementById('formRegistro');
 const mensajeRespuestaDiv = document.getElementById('mensajeRespuesta');
+const tipoSelect = document.getElementById('tipo');
+const labelJustificacion = document.getElementById('labelJustificacion');
+const justificacionExtraTextarea = document.getElementById('justificacionExtra');
 
 // 1. Actualizar hora en el formulario cada segundo
 function actualizarHora() {
@@ -22,6 +29,24 @@ function actualizarHora() {
     second: '2-digit',
   });
 }
+
+function esDespuesDeLasCinco() {
+  const ahora = new Date();
+  const hora = ahora.getHours();
+  return hora >= 17; // 17 = 5pm
+}
+tipoSelect.addEventListener('change', () => {
+  const tipo = tipoSelect.value;
+
+  if (tipo === 'salida' && esDespuesDeLasCinco()) {
+    labelJustificacion.style.display = 'block';
+    justificacionExtraTextarea.style.display = 'block';
+  } else {
+    labelJustificacion.style.display = 'none';
+    justificacionExtraTextarea.style.display = 'none';
+    justificacionExtraTextarea.value = '';
+  }
+});
 
 setInterval(actualizarHora, 1000);
 actualizarHora();
@@ -174,6 +199,7 @@ formRegistro.addEventListener('submit', async (e) => {
     mensajeRespuestaDiv.style.fontWeight = 'bold';
   }
 });
+
 
 
 
