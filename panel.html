@@ -90,22 +90,35 @@
       font-size: 12px;
       color: #9ca3af;
       text-align: center;
+      .header-panel {
+  display: flex;
+  justify-content: space-between; /* Título a la izquierda, logo a la derecha */
+  align-items: center;            /* Centrado verticalmente */
+  margin-bottom: 15px;
+}
+
+.logo-empuvilla {
+  height: 90px;   /* Aquí controlas qué tan grande se ve el logo */
+  width: auto;
+  object-fit: contain;
+}
+
     }
   </style>
 </head>
 <body>
   <div class="contenedor">
     
-    <div style="text-align:center; margin-top:20px;">
-  <img src="logo.png" 
-       alt="Logo EMPUVILLA" 
-       style="width:120px; height:auto; margin-bottom:15px;">
-</div>
-
-<h1>Panel de Reportes - EMPUVILLA</h1>
-
+  <div class="header-panel">
+  <div>
     <h1>Panel de Reportes PTAP - EMPUVILLA</h1>
     <p class="subtitulo">Consulta de horas trabajadas por operario y rango de fechas.</p>
+  </div>
+
+  <img src="logo.png" 
+       alt="Logo EMPUVILLA" 
+       class="logo-empuvilla">
+</div>
 
     <!-- LOGIN -->
     <div id="seccionLogin" class="seccion">
@@ -158,6 +171,7 @@
   <script src="panel.js"></script>
 </body>
 </html>
+
 
 
 
