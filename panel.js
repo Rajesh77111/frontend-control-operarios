@@ -1,24 +1,39 @@
-// panel.js - Panel administrativo completo
+// panel.js - Panel administrativo con soporte PTAP/PTAR y exportación Excel
 const API_URL = 'https://backend-control-operarios.onrender.com';
 
 // Credenciales
 const USUARIO_PERMITIDO = 'admin';
 const PASSWORD_PERMITIDO = 'empuvilla2025';
 
-// 💰 SALARIOS BASE POR OPERARIO (ajústalos según corresponda)
+// 💰 SALARIOS POR OPERARIO Y PLANTA
 const SALARIOS = {
-  'Hernan Aragon': 1423500,
-  'Rossa Viafara': 1423500,
-  'Jaiver Casaran': 1423500,
-  'Arnoldo Camacho': 1423500,
+  PTAP: {
+    'Hernan Aragon': 1423500,
+    'Rossa Viafara': 1423500,
+    'Jaiver Casaran': 1423500,
+    'Arnoldo Camacho': 1423500,
+  },
+  PTAR: {
+    'Bladimir Cifuentes': 1423500,
+    'Willington Granja': 1423500,
+    'Rigoberto Arrechea': 1423500,
+  }
 };
 
-// Constantes laborales de Colombia 2025
-const HORAS_MENSUALES_BASE = 240; // 8 horas/día * 30 días
-const RECARGO_HORA_EXTRA = 1.25; // 25% de recargo
-const RECARGO_DOMINICAL = 1.75; // 75% de recargo
+// Constantes laborales Colombia 2025
+const HORAS_MENSUALES_BASE = 240;
+const HORAS_SEMANALES_PTAR = 45;
+const RECARGO_HORA_EXTRA = 1.25;
+const RECARGO_DOMINICAL = 1.75;
+const RECARGO_NOCTURNO = 1.35; // 35% adicional
 
-// Elementos del DOM
+// Operarios por planta
+const OPERARIOS = {
+  PTAP: ['Hernan Aragon', 'Rossa Viafara', 'Jaiver Casaran', 'Arnoldo Camacho'],
+  PTAR: ['Bladimir Cifuentes', 'Willington Granja', 'Rigoberto Arrechea']
+};
+
+// Elementos DOM
 const seccionLogin = document.getElementById('seccionLogin');
 const seccionReporte = document.getElementById('seccionReporte');
 const seccionPermisos = document.getElementById('seccionPermisos');
@@ -30,6 +45,7 @@ const btnEliminar = document.getElementById('btnEliminar');
 const btnMostrarPermisos = document.getElementById('btnMostrarPermisos');
 const btnRegistrarPermiso = document.getElementById('btnRegistrarPermiso');
 
+const plantaReporte = document.getElementById('plantaReporte');
 const operarioReporte = document.getElementById('operarioReporte');
 const fechaDesde = document.getElementById('fechaDesde');
 const fechaHasta = document.getElementById('fechaHasta');
@@ -37,6 +53,7 @@ const fechaHasta = document.getElementById('fechaHasta');
 const resumenDiv = document.getElementById('resumen');
 const tablaDetalleDiv = document.getElementById('tablaDetalle');
 
+const plantaPermiso = document.getElementById('plantaPermiso');
 const operarioPermiso = document.getElementById('operarioPermiso');
 const fechaPermiso = document.getElementById('fechaPermiso');
 const horasPermiso = document.getElementById('horasPermiso');
@@ -44,7 +61,10 @@ const motivoPermiso = document.getElementById('motivoPermiso');
 const mensajePermiso = document.getElementById('mensajePermiso');
 const listaPermisosDiv = document.getElementById('listaPermisos');
 
-// 1. LOGIN
+let datosReporteActual = null;
+
+// ==================== LOGIN ====================
+
 btnLogin.addEventListener('click', () => {
   const usuario = document.getElementById('usuario').value.trim();
   const password = document.getElementById('password').value.trim();
@@ -52,7 +72,6 @@ btnLogin.addEventListener('click', () => {
   if (usuario === USUARIO_PERMITIDO && password === PASSWORD_PERMITIDO) {
     mensajeLogin.textContent = 'Ingreso exitoso.';
     mensajeLogin.style.color = '#22c55e';
-
     seccionLogin.classList.add('oculto');
     seccionReporte.classList.remove('oculto');
   } else {
@@ -61,188 +80,323 @@ btnLogin.addEventListener('click', () => {
   }
 });
 
-// 2. CONSULTAR REPORTE CON CÁLCULO DE PAGO
+// ==================== SELECTOR DE PLANTA EN REPORTE ====================
+
+plantaReporte.addEventListener('change', () => {
+  const planta = plantaReporte.value;
+  if (!planta) {
+    operarioReporte.innerHTML = '<option value="">Primero selecciona planta...</option>';
+    return;
+  }
+
+  operarioReporte.innerHTML = '<option value="">Seleccione...</option>';
+  OPERARIOS[planta].forEach(op => {
+    operarioReporte.innerHTML += `<option value="${op}">${op}</option>`;
+  });
+});
+
+plantaPermiso.addEventListener('change', () => {
+  const planta = plantaPermiso.value;
+  if (!planta) {
+    operarioPermiso.innerHTML = '<option value="">Primero selecciona planta...</option>';
+    return;
+  }
+
+  operarioPermiso.innerHTML = '<option value="">Seleccione...</option>';
+  OPERARIOS[planta].forEach(op => {
+    operarioPermiso.innerHTML += `<option value="${op}">${op}</option>`;
+  });
+});
+
+// ==================== CONSULTAR REPORTE ====================
+
 btnConsultar.addEventListener('click', async () => {
+  const planta = plantaReporte.value;
   const operario = operarioReporte.value;
   const desde = fechaDesde.value;
   const hasta = fechaHasta.value;
 
-  if (!operario || !desde || !hasta) {
-    resumenDiv.textContent = 'Debes seleccionar operario, fecha desde y hasta.';
+  if (!planta || !operario || !desde || !hasta) {
+    resumenDiv.textContent = 'Completa todos los campos';
     resumenDiv.style.color = '#f97316';
     return;
   }
 
   try {
-    const url = `${API_URL}/api/reporte-horas?operario=${encodeURIComponent(
-      operario
-    )}&desde=${desde}&hasta=${hasta}`;
-
+    const url = `${API_URL}/api/reporte-horas?operario=${encodeURIComponent(operario)}&planta=${planta}&desde=${desde}&hasta=${hasta}`;
     const resp = await fetch(url);
     const data = await resp.json();
 
     if (!resp.ok) {
-      resumenDiv.textContent = data.mensaje || 'Error al obtener el reporte.';
+      resumenDiv.textContent = data.mensaje || 'Error al obtener reporte';
       resumenDiv.style.color = '#f97316';
       return;
     }
 
-    // Calcular valores monetarios
-    const salarioBase = SALARIOS[operario] || 0;
-    const valorHoraNormal = salarioBase / HORAS_MENSUALES_BASE;
-    const valorHoraExtra = valorHoraNormal * RECARGO_HORA_EXTRA;
-    const valorHoraDominical = valorHoraNormal * RECARGO_DOMINICAL;
+    datosReporteActual = data;
 
-    const pagoNormal = data.horasNormales * valorHoraNormal;
-    const pagoExtra = data.horasExtra * valorHoraExtra;
-    const pagoDominical = data.horasDominicales * valorHoraDominical;
-    const pagoTotal = pagoNormal + pagoExtra + pagoDominical;
-
-    // Calcular horas netas (trabajadas - permisos)
-    const horasNetas = data.totalHoras - data.horasPermiso;
-
-    // Mostrar resumen
-    resumenDiv.style.color = '#e5e7eb';
-    resumenDiv.innerHTML = `
-      <div style="background: #1f2937; padding: 20px; border-radius: 12px; margin-bottom: 15px;">
-        <h3 style="margin: 0 0 15px 0; color: #60a5fa; font-size: 18px;">📊 Resumen de Horas</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; font-size: 14px;">
-          <div><strong>Operario:</strong> ${data.operario}</div>
-          <div><strong>Período:</strong> ${data.desde} a ${data.hasta}</div>
-          <div><strong>Salario base:</strong> $${salarioBase.toLocaleString('es-CO')}</div>
-          <div><strong>Total trabajadas:</strong> ${data.totalHoras} h</div>
-          <div><strong>Horas normales:</strong> ${data.horasNormales} h</div>
-          <div><strong>Horas extra:</strong> ${data.horasExtra} h</div>
-          <div><strong>Horas dominicales:</strong> ${data.horasDominicales} h</div>
-          <div style="color: #fbbf24;"><strong>⚠️ Horas permiso:</strong> ${data.horasPermiso} h</div>
-          <div style="color: #22c55e;"><strong>✅ Horas netas:</strong> ${horasNetas.toFixed(2)} h</div>
-        </div>
-      </div>
-
-      <div style="background: #1f2937; padding: 20px; border-radius: 12px;">
-        <h3 style="margin: 0 0 15px 0; color: #22c55e; font-size: 18px;">💰 Cálculo de Pago</h3>
-        <div style="display: grid; gap: 10px; font-size: 14px;">
-          <div style="display: flex; justify-content: space-between; padding: 8px; background: #111827; border-radius: 6px;">
-            <span>Pago horas normales (${data.horasNormales} h × $${valorHoraNormal.toFixed(0)}):</span>
-            <strong style="color: #93c5fd;">$${pagoNormal.toLocaleString('es-CO', {maximumFractionDigits: 0})}</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between; padding: 8px; background: #111827; border-radius: 6px;">
-            <span>Pago horas extra (${data.horasExtra} h × $${valorHoraExtra.toFixed(0)}):</span>
-            <strong style="color: #fbbf24;">$${pagoExtra.toLocaleString('es-CO', {maximumFractionDigits: 0})}</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between; padding: 8px; background: #111827; border-radius: 6px;">
-            <span>Pago horas dominicales (${data.horasDominicales} h × $${valorHoraDominical.toFixed(0)}):</span>
-            <strong style="color: #c084fc;">$${pagoDominical.toLocaleString('es-CO', {maximumFractionDigits: 0})}</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between; padding: 12px; background: #22c55e; border-radius: 6px; margin-top: 8px;">
-            <span style="color: #052e16; font-weight: 700; font-size: 16px;">TOTAL A PAGAR:</span>
-            <strong style="color: #052e16; font-size: 18px;">$${pagoTotal.toLocaleString('es-CO', {maximumFractionDigits: 0})}</strong>
-          </div>
-        </div>
-      </div>
-    `;
-
-    // Mostrar detalle en tabla
-    if (Array.isArray(data.detalle) && data.detalle.length > 0) {
-      let html = `
-        <div style="margin-top: 15px;">
-          <h3 style="color: #60a5fa; margin-bottom: 10px;">📅 Detalle por Día</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Domingo</th>
-                <th>Horas normales</th>
-                <th>Horas extra</th>
-                <th>Horas dominicales</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-
-      for (const fila of data.detalle) {
-        html += `
-          <tr>
-            <td>${fila.fecha}</td>
-            <td>${fila.domingo ? 'Sí' : 'No'}</td>
-            <td>${fila.horasNormalesDia.toFixed(2)}</td>
-            <td>${fila.horasExtraDia.toFixed(2)}</td>
-            <td>${fila.horasDominicalesDia.toFixed(2)}</td>
-          </tr>
-        `;
-      }
-
-      html += '</tbody></table></div>';
-      tablaDetalleDiv.innerHTML = html;
+    if (planta === 'PTAP') {
+      mostrarReportePTAP(data);
     } else {
-      tablaDetalleDiv.innerHTML = '<p>No hay detalle para este rango.</p>';
+      mostrarReportePTAR(data);
     }
   } catch (err) {
     console.error(err);
-    resumenDiv.textContent = 'No se pudo conectar con el servidor. Revisa tu conexión.';
+    resumenDiv.textContent = 'Error de conexión';
     resumenDiv.style.color = '#f97316';
   }
 });
 
-// 3. ELIMINAR REGISTROS
+// ==================== MOSTRAR REPORTE PTAP ====================
+
+function mostrarReportePTAP(data) {
+  const salarioBase = SALARIOS.PTAP[data.operario] || 0;
+  const valorHoraNormal = salarioBase / HORAS_MENSUALES_BASE;
+  const valorHoraExtra = valorHoraNormal * RECARGO_HORA_EXTRA;
+  const valorHoraDominical = valorHoraNormal * RECARGO_DOMINICAL;
+
+  const pagoNormal = data.horasNormales * valorHoraNormal;
+  const pagoExtra = data.horasExtra * valorHoraExtra;
+  const pagoDominical = data.horasDominicales * valorHoraDominical;
+  const pagoTotal = pagoNormal + pagoExtra + pagoDominical;
+
+  const horasNetas = data.totalHoras - data.horasPermiso;
+
+  resumenDiv.style.color = '#e5e7eb';
+  resumenDiv.innerHTML = `
+    <div style="text-align: right; margin-bottom: 15px;">
+      <button onclick="exportarExcel()" style="background: #059669; padding: 10px 20px; border-radius: 8px; border: none; color: white; font-weight: 600; cursor: pointer;">
+        📥 Exportar a Excel
+      </button>
+    </div>
+    
+    <div style="background: #1f2937; padding: 20px; border-radius: 12px; margin-bottom: 15px;">
+      <h3 style="margin: 0 0 15px 0; color: #60a5fa;">📊 PTAP - Resumen de Horas</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; font-size: 14px;">
+        <div><strong>Operario:</strong> ${data.operario}</div>
+        <div><strong>Período:</strong> ${data.desde} a ${data.hasta}</div>
+        <div><strong>Salario base:</strong> $${salarioBase.toLocaleString('es-CO')}</div>
+        <div><strong>Total trabajadas:</strong> ${data.totalHoras} h</div>
+        <div><strong>Horas normales:</strong> ${data.horasNormales} h</div>
+        <div><strong>Horas extra:</strong> ${data.horasExtra} h</div>
+        <div><strong>Horas dominicales:</strong> ${data.horasDominicales} h</div>
+        <div style="color: #fbbf24;"><strong>⚠️ Horas permiso:</strong> ${data.horasPermiso} h</div>
+        <div style="color: #22c55e;"><strong>✅ Horas netas:</strong> ${horasNetas.toFixed(2)} h</div>
+      </div>
+    </div>
+
+    <div style="background: #1f2937; padding: 20px; border-radius: 12px;">
+      <h3 style="margin: 0 0 15px 0; color: #22c55e;">💰 Cálculo de Pago</h3>
+      <div style="display: grid; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; padding: 8px; background: #111827; border-radius: 6px;">
+          <span>Horas normales (${data.horasNormales} h × $${valorHoraNormal.toFixed(0)}):</span>
+          <strong style="color: #93c5fd;">$${Math.round(pagoNormal).toLocaleString('es-CO')}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px; background: #111827; border-radius: 6px;">
+          <span>Horas extra (${data.horasExtra} h × $${valorHoraExtra.toFixed(0)}):</span>
+          <strong style="color: #fbbf24;">$${Math.round(pagoExtra).toLocaleString('es-CO')}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px; background: #111827; border-radius: 6px;">
+          <span>Horas dominicales (${data.horasDominicales} h × $${valorHoraDominical.toFixed(0)}):</span>
+          <strong style="color: #c084fc;">$${Math.round(pagoDominical).toLocaleString('es-CO')}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 12px; background: #22c55e; border-radius: 6px; margin-top: 8px;">
+          <span style="color: #052e16; font-weight: 700; font-size: 16px;">TOTAL A PAGAR:</span>
+          <strong style="color: #052e16; font-size: 18px;">$${Math.round(pagoTotal).toLocaleString('es-CO')}</strong>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Detalle diario
+  if (data.detalle && data.detalle.length > 0) {
+    let html = `
+      <div style="margin-top: 15px;">
+        <h3 style="color: #60a5fa; margin-bottom: 10px;">📅 Detalle por Día</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Domingo</th>
+              <th>Horas normales</th>
+              <th>Horas extra</th>
+              <th>Horas dominicales</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    for (const fila of data.detalle) {
+      html += `
+        <tr>
+          <td>${fila.fecha}</td>
+          <td>${fila.domingo ? 'Sí' : 'No'}</td>
+          <td>${fila.horasNormalesDia.toFixed(2)}</td>
+          <td>${fila.horasExtraDia.toFixed(2)}</td>
+          <td>${fila.horasDominicalesDia.toFixed(2)}</td>
+        </tr>
+      `;
+    }
+
+    html += '</tbody></table></div>';
+    tablaDetalleDiv.innerHTML = html;
+  }
+}
+
+// ==================== MOSTRAR REPORTE PTAR ====================
+
+function mostrarReportePTAR(data) {
+  const salarioBase = SALARIOS.PTAR[data.operario] || 0;
+  const valorHoraNormal = salarioBase / HORAS_MENSUALES_BASE;
+  const valorHoraExtra = valorHoraNormal * RECARGO_HORA_EXTRA;
+  const valorHoraNocturna = valorHoraNormal * RECARGO_NOCTURNO;
+
+  const pagoNormal = data.horasNormales * valorHoraNormal;
+  const pagoExtra = data.horasExtra * valorHoraExtra;
+  const pagoNocturno = data.horasNocturnas * valorHoraNocturna;
+  const pagoTotal = pagoNormal + pagoExtra + pagoNocturno;
+
+  const horasNetas = data.totalHoras - data.horasPermiso;
+
+  resumenDiv.style.color = '#e5e7eb';
+  resumenDiv.innerHTML = `
+    <div style="text-align: right; margin-bottom: 15px;">
+      <button onclick="exportarExcel()" style="background: #059669; padding: 10px 20px; border-radius: 8px; border: none; color: white; font-weight: 600; cursor: pointer;">
+        📥 Exportar a Excel
+      </button>
+    </div>
+    
+    <div style="background: #1f2937; padding: 20px; border-radius: 12px; margin-bottom: 15px;">
+      <h3 style="margin: 0 0 15px 0; color: #60a5fa;">🌙 PTAR - Resumen de Horas</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; font-size: 14px;">
+        <div><strong>Operario:</strong> ${data.operario}</div>
+        <div><strong>Período:</strong> ${data.desde} a ${data.hasta}</div>
+        <div><strong>Salario base:</strong> $${salarioBase.toLocaleString('es-CO')}</div>
+        <div><strong>Total trabajadas:</strong> ${data.totalHoras} h</div>
+        <div><strong>Horas normales:</strong> ${data.horasNormales} h (hasta 45h/semana)</div>
+        <div><strong>Horas extra:</strong> ${data.horasExtra} h (sobre 45h/semana)</div>
+        <div style="color: #a78bfa;"><strong>🌙 Horas nocturnas:</strong> ${data.horasNocturnas} h (19:00-06:00)</div>
+        <div style="color: #fbbf24;"><strong>⚠️ Horas permiso:</strong> ${data.horasPermiso} h</div>
+        <div style="color: #22c55e;"><strong>✅ Horas netas:</strong> ${horasNetas.toFixed(2)} h</div>
+      </div>
+    </div>
+
+    <div style="background: #1f2937; padding: 20px; border-radius: 12px;">
+      <h3 style="margin: 0 0 15px 0; color: #22c55e;">💰 Cálculo de Pago</h3>
+      <div style="display: grid; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; padding: 8px; background: #111827; border-radius: 6px;">
+          <span>Horas normales (${data.horasNormales} h × $${valorHoraNormal.toFixed(0)}):</span>
+          <strong style="color: #93c5fd;">$${Math.round(pagoNormal).toLocaleString('es-CO')}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px; background: #111827; border-radius: 6px;">
+          <span>Horas extra +25% (${data.horasExtra} h × $${valorHoraExtra.toFixed(0)}):</span>
+          <strong style="color: #fbbf24;">$${Math.round(pagoExtra).toLocaleString('es-CO')}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px; background: #111827; border-radius: 6px;">
+          <span>Horas nocturnas +35% (${data.horasNocturnas} h × $${valorHoraNocturna.toFixed(0)}):</span>
+          <strong style="color: #a78bfa;">$${Math.round(pagoNocturno).toLocaleString('es-CO')}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 12px; background: #22c55e; border-radius: 6px; margin-top: 8px;">
+          <span style="color: #052e16; font-weight: 700; font-size: 16px;">TOTAL A PAGAR:</span>
+          <strong style="color: #052e16; font-size: 18px;">$${Math.round(pagoTotal).toLocaleString('es-CO')}</strong>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Detalle semanal
+  if (data.detalleSemanas && data.detalleSemanas.length > 0) {
+    let html = `
+      <div style="margin-top: 15px;">
+        <h3 style="color: #60a5fa; margin-bottom: 10px;">📆 Detalle por Semana</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Semana</th>
+              <th>Total horas</th>
+              <th>Normales</th>
+              <th>Extra</th>
+              <th>Nocturnas</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    for (const sem of data.detalleSemanas) {
+      html += `
+        <tr>
+          <td>${sem.inicio} a ${sem.fin}</td>
+          <td>${sem.horasTotales.toFixed(2)}</td>
+          <td>${sem.horasNormales.toFixed(2)}</td>
+          <td>${sem.horasExtra.toFixed(2)}</td>
+          <td>${sem.horasNocturnas.toFixed(2)}</td>
+        </tr>
+      `;
+    }
+
+    html += '</tbody></table></div>';
+    tablaDetalleDiv.innerHTML = html;
+  }
+}
+
+// ==================== ELIMINAR REGISTROS ====================
+
 btnEliminar.addEventListener('click', async () => {
+  const planta = plantaReporte.value;
   const operario = operarioReporte.value;
   const desde = fechaDesde.value;
   const hasta = fechaHasta.value;
 
-  if (!operario || !desde || !hasta) {
-    resumenDiv.textContent = 'Debes seleccionar operario, fecha desde y hasta antes de eliminar.';
+  if (!planta || !operario || !desde || !hasta) {
+    resumenDiv.textContent = 'Completa todos los campos';
     resumenDiv.style.color = '#f97316';
     return;
   }
 
-  const seguro = window.confirm(
-    `Vas a eliminar TODOS los registros de ${operario}\nentre ${desde} y ${hasta}.\n\nEsta acción no se puede deshacer.\n\n¿Estás seguro?`
-  );
-
-  if (!seguro) return;
+  if (!confirm(`¿Eliminar TODOS los registros de ${operario} (${planta}) entre ${desde} y ${hasta}?`)) return;
 
   try {
     const resp = await fetch(`${API_URL}/api/registros-rango`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ operario, desde, hasta }),
+      body: JSON.stringify({ operario, planta, desde, hasta }),
     });
 
     const data = await resp.json();
 
     if (!resp.ok) {
-      resumenDiv.textContent = data.mensaje || 'Error al eliminar registros.';
+      resumenDiv.textContent = data.mensaje || 'Error al eliminar';
       resumenDiv.style.color = '#f97316';
       return;
     }
 
     resumenDiv.style.color = '#22c55e';
-    resumenDiv.textContent = `Se eliminaron ${data.eliminados} registros de ${operario} entre ${desde} y ${hasta}.`;
+    resumenDiv.textContent = `Se eliminaron ${data.eliminados} registros`;
     tablaDetalleDiv.innerHTML = '';
   } catch (err) {
     console.error(err);
-    resumenDiv.textContent = 'No se pudo conectar con el servidor al intentar eliminar.';
+    resumenDiv.textContent = 'Error de conexión';
     resumenDiv.style.color = '#f97316';
   }
 });
 
-// 4. MOSTRAR SECCIÓN DE PERMISOS
+// ==================== GESTIÓN DE PERMISOS ====================
+
 btnMostrarPermisos.addEventListener('click', () => {
   seccionReporte.classList.add('oculto');
   seccionPermisos.classList.remove('oculto');
   cargarPermisos();
 });
 
-// 5. REGISTRAR PERMISO
 btnRegistrarPermiso.addEventListener('click', async () => {
-  const nombreOperario = operarioPermiso.value;
-  const fechaPerm = fechaPermiso.value;
+  const planta = plantaPermiso.value;
+  const operario = operarioPermiso.value;
+  const fecha = fechaPermiso.value;
   const horas = horasPermiso.value;
   const motivo = motivoPermiso.value.trim();
 
-  if (!nombreOperario || !fechaPerm || !horas || !motivo) {
-    mensajePermiso.textContent = 'Debes completar todos los campos.';
+  if (!planta || !operario || !fecha || !horas || !motivo) {
+    mensajePermiso.textContent = 'Completa todos los campos';
     mensajePermiso.style.color = '#f97316';
     return;
   }
@@ -252,8 +406,9 @@ btnRegistrarPermiso.addEventListener('click', async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        nombreOperario,
-        fechaPermiso: fechaPerm,
+        nombreOperario: operario,
+        planta,
+        fechaPermiso: fecha,
         horasPermiso: parseFloat(horas),
         motivo,
       }),
@@ -262,36 +417,33 @@ btnRegistrarPermiso.addEventListener('click', async () => {
     const data = await resp.json();
 
     if (!resp.ok) {
-      mensajePermiso.textContent = data.mensaje || 'Error al registrar permiso.';
+      mensajePermiso.textContent = data.mensaje || 'Error';
       mensajePermiso.style.color = '#f97316';
       return;
     }
 
-    mensajePermiso.textContent = '✅ Permiso registrado correctamente.';
+    mensajePermiso.textContent = '✅ Permiso registrado';
     mensajePermiso.style.color = '#22c55e';
 
-    // Limpiar formulario
     horasPermiso.value = '';
     motivoPermiso.value = '';
-
-    // Recargar lista
     cargarPermisos();
   } catch (err) {
     console.error(err);
-    mensajePermiso.textContent = 'No se pudo conectar con el servidor.';
+    mensajePermiso.textContent = 'Error de conexión';
     mensajePermiso.style.color = '#f97316';
   }
 });
 
-// 6. CARGAR LISTA DE PERMISOS
 async function cargarPermisos() {
+  const planta = plantaPermiso.value;
   const operario = operarioPermiso.value;
-  if (!operario) {
-    listaPermisosDiv.innerHTML = '<p style="color: #9ca3af;">Selecciona un operario para ver sus permisos.</p>';
+  
+  if (!planta || !operario) {
+    listaPermisosDiv.innerHTML = '<p style="color: #9ca3af;">Selecciona planta y operario</p>';
     return;
   }
 
-  // Cargar permisos del mes actual
   const ahora = new Date();
   const año = ahora.getFullYear();
   const mes = String(ahora.getMonth() + 1).padStart(2, '0');
@@ -299,20 +451,17 @@ async function cargarPermisos() {
   const hasta = `${año}-${mes}-31`;
 
   try {
-    const url = `${API_URL}/api/permisos?operario=${encodeURIComponent(
-      operario
-    )}&desde=${desde}&hasta=${hasta}`;
-
+    const url = `${API_URL}/api/permisos?operario=${encodeURIComponent(operario)}&planta=${planta}&desde=${desde}&hasta=${hasta}`;
     const resp = await fetch(url);
     const permisos = await resp.json();
 
     if (!resp.ok) {
-      listaPermisosDiv.innerHTML = '<p style="color: #f97316;">Error al cargar permisos.</p>';
+      listaPermisosDiv.innerHTML = '<p style="color: #f97316;">Error al cargar</p>';
       return;
     }
 
     if (!Array.isArray(permisos) || permisos.length === 0) {
-      listaPermisosDiv.innerHTML = '<p style="color: #9ca3af;">No hay permisos registrados este mes.</p>';
+      listaPermisosDiv.innerHTML = '<p style="color: #9ca3af;">Sin permisos este mes</p>';
       return;
     }
 
@@ -320,7 +469,7 @@ async function cargarPermisos() {
 
     let html = `
       <div style="background: #1f2937; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-        <strong style="color: #60a5fa;">Total horas de permiso este mes: ${totalHoras.toFixed(2)} h</strong>
+        <strong style="color: #60a5fa;">Total horas permiso: ${totalHoras.toFixed(2)} h</strong>
       </div>
       <table>
         <thead>
@@ -342,7 +491,7 @@ async function cargarPermisos() {
           <td>${permiso.motivo}</td>
           <td>
             <button onclick="eliminarPermiso('${permiso._id}')" 
-                    style="padding: 4px 10px; background: #b91c1c; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                    style="padding: 4px 10px; background: #b91c1c; color: white; border: none; border-radius: 6px; cursor: pointer;">
               Eliminar
             </button>
           </td>
@@ -354,34 +503,224 @@ async function cargarPermisos() {
     listaPermisosDiv.innerHTML = html;
   } catch (err) {
     console.error(err);
-    listaPermisosDiv.innerHTML = '<p style="color: #f97316;">No se pudo conectar con el servidor.</p>';
+    listaPermisosDiv.innerHTML = '<p style="color: #f97316;">Error de conexión</p>';
   }
 }
 
-// 7. ELIMINAR PERMISO
-window.eliminarPermiso = async function (id) {
-  if (!confirm('¿Estás seguro de eliminar este permiso?')) return;
+window.eliminarPermiso = async function(id) {
+  if (!confirm('¿Eliminar este permiso?')) return;
 
   try {
     const resp = await fetch(`${API_URL}/api/permisos/${id}`, {
       method: 'DELETE',
     });
 
-    const data = await resp.json();
-
     if (!resp.ok) {
-      alert(data.mensaje || 'Error al eliminar permiso.');
+      alert('Error al eliminar');
       return;
     }
 
-    mensajePermiso.textContent = '✅ Permiso eliminado correctamente.';
+    mensajePermiso.textContent = '✅ Permiso eliminado';
     mensajePermiso.style.color = '#22c55e';
     cargarPermisos();
   } catch (err) {
     console.error(err);
-    alert('No se pudo conectar con el servidor.');
+    alert('Error de conexión');
   }
 };
 
-// Cargar permisos cuando cambie el operario
 operarioPermiso.addEventListener('change', cargarPermisos);
+
+// ==================== EXPORTAR A EXCEL ====================
+
+window.exportarExcel = async function() {
+  if (!datosReporteActual) {
+    alert('Primero consulta un reporte');
+    return;
+  }
+
+  const data = datosReporteActual;
+  const wb = XLSX.utils.book_new();
+
+  if (data.planta === 'PTAP') {
+    generarExcelPTAP(wb, data);
+  } else {
+    generarExcelPTAR(wb, data);
+  }
+
+  const nombreArchivo = `Reporte_${data.planta}_${data.operario.replace(/\s+/g, '_')}_${data.desde}_${data.hasta}.xlsx`;
+  XLSX.writeFile(wb, nombreArchivo);
+
+  mostrarMensajeExito('✅ Excel descargado correctamente');
+};
+
+function generarExcelPTAP(wb, data) {
+  const salarioBase = SALARIOS.PTAP[data.operario] || 0;
+  const valorHoraNormal = salarioBase / HORAS_MENSUALES_BASE;
+  const valorHoraExtra = valorHoraNormal * RECARGO_HORA_EXTRA;
+  const valorHoraDominical = valorHoraNormal * RECARGO_DOMINICAL;
+
+  const pagoNormal = data.horasNormales * valorHoraNormal;
+  const pagoExtra = data.horasExtra * valorHoraExtra;
+  const pagoDominical = data.horasDominicales * valorHoraDominical;
+  const pagoTotal = pagoNormal + pagoExtra + pagoDominical;
+
+  // HOJA 1: RESUMEN
+  const resumen = [
+    ['EMPUVILLA S.A. E.S.P. - PTAP'],
+    ['REPORTE DE HORAS TRABAJADAS Y LIQUIDACIÓN'],
+    [],
+    ['INFORMACIÓN GENERAL'],
+    ['Operario:', data.operario],
+    ['Planta:', 'PTAP'],
+    ['Período:', `${data.desde} a ${data.hasta}`],
+    ['Fecha generación:', new Date().toLocaleDateString('es-CO')],
+    ['Salario base:', `${salarioBase.toLocaleString('es-CO')}`],
+    [],
+    ['RESUMEN DE HORAS'],
+    ['Concepto', 'Cantidad (h)'],
+    ['Total trabajadas', data.totalHoras],
+    ['Horas normales', data.horasNormales],
+    ['Horas extra', data.horasExtra],
+    ['Horas dominicales', data.horasDominicales],
+    ['Horas permiso', data.horasPermiso],
+    ['Horas netas', (data.totalHoras - data.horasPermiso).toFixed(2)],
+    [],
+    ['LIQUIDACIÓN'],
+    ['Concepto', 'Horas', 'Valor/hora', 'Subtotal'],
+    ['Horas normales', data.horasNormales, `${Math.round(valorHoraNormal).toLocaleString('es-CO')}`, `${Math.round(pagoNormal).toLocaleString('es-CO')}`],
+    ['Horas extra (+25%)', data.horasExtra, `${Math.round(valorHoraExtra).toLocaleString('es-CO')}`, `${Math.round(pagoExtra).toLocaleString('es-CO')}`],
+    ['Horas dominicales (+75%)', data.horasDominicales, `${Math.round(valorHoraDominical).toLocaleString('es-CO')}`, `${Math.round(pagoDominical).toLocaleString('es-CO')}`],
+    [],
+    ['TOTAL A PAGAR', '', '', `${Math.round(pagoTotal).toLocaleString('es-CO')}`],
+  ];
+
+  const wsResumen = XLSX.utils.aoa_to_sheet(resumen);
+  wsResumen['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 20 }, { wch: 20 }];
+  XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+  // HOJA 2: DETALLE DIARIO
+  if (data.detalle && data.detalle.length > 0) {
+    const detalle = [
+      ['DETALLE DIARIO'],
+      ['Operario:', data.operario],
+      [],
+      ['Fecha', 'Domingo', 'H. Normales', 'H. Extra', 'H. Dominicales', 'Total'],
+    ];
+
+    for (const d of data.detalle) {
+      const total = d.horasNormalesDia + d.horasExtraDia + d.horasDominicalesDia;
+      detalle.push([
+        d.fecha,
+        d.domingo ? 'Sí' : 'No',
+        d.horasNormalesDia.toFixed(2),
+        d.horasExtraDia.toFixed(2),
+        d.horasDominicalesDia.toFixed(2),
+        total.toFixed(2)
+      ]);
+    }
+
+    detalle.push([]);
+    detalle.push([
+      'TOTALES',
+      '',
+      data.horasNormales.toFixed(2),
+      data.horasExtra.toFixed(2),
+      data.horasDominicales.toFixed(2),
+      data.totalHoras.toFixed(2)
+    ]);
+
+    const wsDetalle = XLSX.utils.aoa_to_sheet(detalle);
+    wsDetalle['!cols'] = [{ wch: 15 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle Diario');
+  }
+}
+
+function generarExcelPTAR(wb, data) {
+  const salarioBase = SALARIOS.PTAR[data.operario] || 0;
+  const valorHoraNormal = salarioBase / HORAS_MENSUALES_BASE;
+  const valorHoraExtra = valorHoraNormal * RECARGO_HORA_EXTRA;
+  const valorHoraNocturna = valorHoraNormal * RECARGO_NOCTURNO;
+
+  const pagoNormal = data.horasNormales * valorHoraNormal;
+  const pagoExtra = data.horasExtra * valorHoraExtra;
+  const pagoNocturno = data.horasNocturnas * valorHoraNocturna;
+  const pagoTotal = pagoNormal + pagoExtra + pagoNocturno;
+
+  // HOJA 1: RESUMEN
+  const resumen = [
+    ['EMPUVILLA S.A. E.S.P. - PTAR'],
+    ['REPORTE DE HORAS TRABAJADAS Y LIQUIDACIÓN'],
+    [],
+    ['INFORMACIÓN GENERAL'],
+    ['Operario:', data.operario],
+    ['Planta:', 'PTAR'],
+    ['Período:', `${data.desde} a ${data.hasta}`],
+    ['Fecha generación:', new Date().toLocaleDateString('es-CO')],
+    ['Salario base:', `${salarioBase.toLocaleString('es-CO')}`],
+    [],
+    ['RESUMEN DE HORAS'],
+    ['Concepto', 'Cantidad (h)'],
+    ['Total trabajadas', data.totalHoras],
+    ['Horas normales (hasta 45h/sem)', data.horasNormales],
+    ['Horas extra (sobre 45h/sem)', data.horasExtra],
+    ['Horas nocturnas (19:00-06:00)', data.horasNocturnas],
+    ['Horas permiso', data.horasPermiso],
+    ['Horas netas', (data.totalHoras - data.horasPermiso).toFixed(2)],
+    [],
+    ['LIQUIDACIÓN'],
+    ['Concepto', 'Horas', 'Valor/hora', 'Subtotal'],
+    ['Horas normales', data.horasNormales, `${Math.round(valorHoraNormal).toLocaleString('es-CO')}`, `${Math.round(pagoNormal).toLocaleString('es-CO')}`],
+    ['Horas extra (+25%)', data.horasExtra, `${Math.round(valorHoraExtra).toLocaleString('es-CO')}`, `${Math.round(pagoExtra).toLocaleString('es-CO')}`],
+    ['Horas nocturnas (+35%)', data.horasNocturnas, `${Math.round(valorHoraNocturna).toLocaleString('es-CO')}`, `${Math.round(pagoNocturno).toLocaleString('es-CO')}`],
+    [],
+    ['TOTAL A PAGAR', '', '', `${Math.round(pagoTotal).toLocaleString('es-CO')}`],
+  ];
+
+  const wsResumen = XLSX.utils.aoa_to_sheet(resumen);
+  wsResumen['!cols'] = [{ wch: 35 }, { wch: 15 }, { wch: 20 }, { wch: 20 }];
+  XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+  // HOJA 2: DETALLE SEMANAL
+  if (data.detalleSemanas && data.detalleSemanas.length > 0) {
+    const detalle = [
+      ['DETALLE POR SEMANA'],
+      ['Operario:', data.operario],
+      ['Límite semanal: 45 horas'],
+      [],
+      ['Semana', 'Total', 'Normales', 'Extra', 'Nocturnas'],
+    ];
+
+    for (const sem of data.detalleSemanas) {
+      detalle.push([
+        `${sem.inicio} a ${sem.fin}`,
+        sem.horasTotales.toFixed(2),
+        sem.horasNormales.toFixed(2),
+        sem.horasExtra.toFixed(2),
+        sem.horasNocturnas.toFixed(2)
+      ]);
+    }
+
+    detalle.push([]);
+    detalle.push([
+      'TOTALES',
+      data.totalHoras.toFixed(2),
+      data.horasNormales.toFixed(2),
+      data.horasExtra.toFixed(2),
+      data.horasNocturnas.toFixed(2)
+    ]);
+
+    const wsDetalle = XLSX.utils.aoa_to_sheet(detalle);
+    wsDetalle['!cols'] = [{ wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle Semanal');
+  }
+}
+
+function mostrarMensajeExito(texto) {
+  const mensaje = document.createElement('div');
+  mensaje.textContent = texto;
+  mensaje.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #22c55e; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 9999;';
+  document.body.appendChild(mensaje);
+  
+  setTimeout(() => mensaje.remove(), 3000);
+}
