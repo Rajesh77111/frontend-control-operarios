@@ -385,3 +385,92 @@ window.eliminarPermiso = async function (id) {
 
 // Cargar permisos cuando cambie el operario
 operarioPermiso.addEventListener('change', cargarPermisos);
+
+// ========== EXPORTAR A EXCEL ==========
+
+let datosReporteActual = null; // Guardar datos del último reporte
+
+// Función para exportar a Excel
+window.exportarExcel = function() {
+  if (!datosReporteActual) {
+    alert('Primero debes consultar un reporte para poder exportarlo.');
+    return;
+  }
+
+  const data = datosReporteActual;
+  const operario = data.operario;
+  const desde = data.desde;
+  const hasta = data.hasta;
+
+  // Calcular valores monetarios
+  const salarioBase = SALARIOS[operario] || 0;
+  const valorHoraNormal = salarioBase / HORAS_MENSUALES_BASE;
+  const valorHoraExtra = valorHoraNormal * RECARGO_HORA_EXTRA;
+  const valorHoraDominical = valorHoraNormal * RECARGO_DOMINICAL;
+
+  const pagoNormal = data.horasNormales * valorHoraNormal;
+  const pagoExtra = data.horasExtra * valorHoraExtra;
+  const pagoDominical = data.horasDominicales * valorHoraDominical;
+  const pagoTotal = pagoNormal + pagoExtra + pagoDominical;
+  const horasNetas = data.totalHoras - data.horasPermiso;
+
+  // Crear el contenido del Excel en formato CSV
+  let csv = '';
+  
+  // ENCABEZADO
+  csv += 'EMPUVILLA S.A. E.S.P.\n';
+  csv += 'REPORTE DE HORAS TRABAJADAS Y LIQUIDACIÓN\n';
+  csv += '\n';
+  
+  // INFORMACIÓN GENERAL
+  csv += 'INFORMACIÓN GENERAL\n';
+  csv += `Operario:,${operario}\n`;
+  csv += `Período:,${desde} a ${hasta}\n`;
+  csv += `Fecha de generación:,${new Date().toLocaleDateString('es-CO')}\n`;
+  csv += `Salario base mensual:,${salarioBase.toLocaleString('es-CO')}\n`;
+  csv += '\n';
+
+  // RESUMEN DE HORAS
+  csv += 'RESUMEN DE HORAS\n';
+  csv += 'Concepto,Cantidad (horas)\n';
+  csv += `Total trabajadas,${data.totalHoras}\n`;
+  csv += `Horas normales,${data.horasNormales}\n`;
+  csv += `Horas extra,${data.horasExtra}\n`;
+  csv += `Horas dominicales,${data.horasDominicales}\n`;
+  csv += `Horas permiso,${data.horasPermiso}\n`;
+  csv += `Horas netas (trabajadas - permisos),${horasNetas.toFixed(2)}\n`;
+  csv += '\n';
+
+  // CÁLCULO DE LIQUIDACIÓN
+  csv += 'CÁLCULO DE LIQUIDACIÓN\n';
+  csv += 'Concepto,Horas,Valor por hora,Subtotal\n';
+  csv += `Horas normales,${data.horasNormales},${valorHoraNormal.toFixed(0)},${Math.round(pagoNormal).toLocaleString('es-CO')}\n`;
+  csv += `Horas extra (+25%),${data.horasExtra},${valorHoraExtra.toFixed(0)},${Math.round(pagoExtra).toLocaleString('es-CO')}\n`;
+  csv += `Horas dominicales (+75%),${data.horasDominicales},${valorHoraDominical.toFixed(0)},${Math.round(pagoDominical).toLocaleString('es-CO')}\n`;
+  csv += `TOTAL A PAGAR,,,${Math.round(pagoTotal).toLocaleString('es-CO')}\n`;
+  csv += '\n';
+
+  // DETALLE DIARIO
+  if (Array.isArray(data.detalle) && data.detalle.length > 0) {
+    csv += 'DETALLE DIARIO\n';
+    csv += 'Fecha,Domingo,Horas normales,Horas extra,Horas dominicales\n';
+    
+    for (const fila of data.detalle) {
+      csv += `${fila.fecha},${fila.domingo ? 'Sí' : 'No'},${fila.horasNormalesDia.toFixed(2)},${fila.horasExtraDia.toFixed(2)},${fila.horasDominicalesDia.toFixed(2)}\n`;
+    }
+  }
+
+  // Crear archivo y descargar
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  
+  const nombreArchivo = `Reporte_${operario.replace(/\s+/g, '_')}_${desde}_${hasta}.csv`;
+  
+  link.setAttribute('href', url);
+  link.setAttribute('download', nombreArchivo);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
