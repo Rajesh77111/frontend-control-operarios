@@ -1,203 +1,173 @@
-// URL de tu backend en Render
+// script.js - Control de registro con soporte PTAP/PTAR
 const API_URL = 'https://backend-control-operarios.onrender.com';
 
-// ⚠️ IMPORTANTE: Cambia estas coordenadas por las de tu planta EMPUVILLA
-const PLANTA_LAT = 3.17253; // Latitud de tu planta
-const PLANTA_LNG = -76.4588; // Longitud de tu planta
-const RADIO_PERMITIDO_METROS = 35; // Radio en metros (debe coincidir con tu backend)
+// Operarios por planta
+const OPERARIOS = {
+  PTAP: ['Hernan Aragon', 'Rossa Viafara', 'Jaiver Casaran', 'Arnoldo Camacho'],
+  PTAR: ['Bladimir Cifuentes', 'Willington Granja', 'Rigoberto Arrechea']
+};
 
+// Elementos DOM
+const plantaSelect = document.getElementById('planta');
+const operarioSelect = document.getElementById('nombreOperario');
 const tipoSelect = document.getElementById('tipo');
 const labelJustificacion = document.getElementById('labelJustificacion');
-const justificacionExtraTextarea = document.getElementById('justificacionExtra');
-
+const justificacionTextarea = document.getElementById('justificacionExtra');
 const horaActualInput = document.getElementById('horaActual');
 const estadoGpsDiv = document.getElementById('estadoGps');
 const latInput = document.getElementById('lat');
 const lngInput = document.getElementById('lng');
 const formRegistro = document.getElementById('formRegistro');
-const mensajeRespuestaDiv = document.getElementById('mensajeRespuesta');
+const mensajeDiv = document.getElementById('mensajeRespuesta');
 
-// 1. Actualizar hora en el formulario cada segundo
+let configPlanta = null;
+
+// Actualizar hora
 function actualizarHora() {
-  const ahora = new Date();
-  horaActualInput.value = ahora.toLocaleTimeString('es-CO', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
+  horaActualInput.value = new Date().toLocaleTimeString('es-CO');
 }
-
-function esDespuesDeLasCinco() {
-  const ahora = new Date();
-  const hora = ahora.getHours();
-  return hora >= 17; // 17 = 5pm
-}
-tipoSelect.addEventListener('change', () => {
-  const tipo = tipoSelect.value;
-
-  if (tipo === 'salida' && esDespuesDeLasCinco()) {
-    labelJustificacion.style.display = 'block';
-    justificacionExtraTextarea.style.display = 'block';
-  } else {
-    labelJustificacion.style.display = 'none';
-    justificacionExtraTextarea.style.display = 'none';
-    justificacionExtraTextarea.value = '';
-  }
-});
-
 setInterval(actualizarHora, 1000);
 actualizarHora();
 
-// 2. Función para calcular distancia entre dos puntos (en metros)
-function distanciaMetros(lat1, lng1, lat2, lng2) {
-  const R = 6371000; // Radio de la Tierra en metros
-  const toRad = (grado) => (grado * Math.PI) / 180;
+// Cambio de planta
+plantaSelect.addEventListener('change', async () => {
+  const planta = plantaSelect.value;
+  
+  if (!planta) {
+    operarioSelect.innerHTML = '<option value="">Primero selecciona una planta...</option>';
+    operarioSelect.disabled = true;
+    return;
+  }
 
+  // Cargar operarios
+  operarioSelect.innerHTML = '<option value="">Seleccione...</option>';
+  OPERARIOS[planta].forEach(op => {
+    operarioSelect.innerHTML += `<option value="${op}">${op}</option>`;
+  });
+  operarioSelect.disabled = false;
+
+  // Cargar configuración de geocerca
+  try {
+    const resp = await fetch(`${API_URL}/api/config-planta/${planta}`);
+    configPlanta = await resp.json();
+    obtenerUbicacion();
+  } catch (err) {
+    console.error('Error al cargar config de planta:', err);
+  }
+});
+
+// Mostrar justificación si es PTAP y salida después de 17:00
+tipoSelect.addEventListener('change', () => {
+  const planta = plantaSelect.value;
+  const tipo = tipoSelect.value;
+  const hora = new Date().getHours();
+
+  if (planta === 'PTAP' && tipo === 'salida' && hora >= 17) {
+    labelJustificacion.classList.remove('oculto');
+    justificacionTextarea.classList.remove('oculto');
+  } else {
+    labelJustificacion.classList.add('oculto');
+    justificacionTextarea.classList.add('oculto');
+    justificacionTextarea.value = '';
+  }
+});
+
+// Calcular distancia
+function distanciaMetros(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const toRad = g => g * Math.PI / 180;
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
-
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) *
-      Math.cos(toRad(lat2)) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c; // Retorna distancia en metros
+  const a = Math.sin(dLat/2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-// 3. Pedir ubicación por GPS
+// Obtener GPS
 function obtenerUbicacion() {
-  if (!navigator.geolocation) {
-    estadoGpsDiv.textContent = 'Tu dispositivo no soporta GPS en el navegador.';
+  if (!navigator.geolocation || !configPlanta) {
+    estadoGpsDiv.textContent = 'GPS no disponible';
     estadoGpsDiv.className = 'info error';
     return;
   }
 
   navigator.geolocation.getCurrentPosition(
-    (posicion) => {
-      const { latitude, longitude } = posicion.coords;
-      latInput.value = latitude;
-      lngInput.value = longitude;
+    pos => {
+      latInput.value = pos.coords.latitude;
+      lngInput.value = pos.coords.longitude;
 
-      // Calcular distancia a la planta
-      const distancia = distanciaMetros(latitude, longitude, PLANTA_LAT, PLANTA_LNG);
-      
-      if (distancia <= RADIO_PERMITIDO_METROS) {
-        estadoGpsDiv.textContent = `Ubicación obtenida ✓ - Dentro de la zona de trabajo`;
+      const dist = distanciaMetros(pos.coords.latitude, pos.coords.longitude, configPlanta.lat, configPlanta.lng);
+
+      if (dist <= configPlanta.radio) {
+        estadoGpsDiv.textContent = `✓ Dentro de la zona (${plantaSelect.value})`;
         estadoGpsDiv.className = 'info ok';
       } else {
-        estadoGpsDiv.textContent = `⚠️ FUERA DE LA ZONA: Estás a ${distancia.toFixed(0)} metros de la planta`;
+        estadoGpsDiv.textContent = `⚠️ Fuera de zona: ${dist.toFixed(0)}m (máx: ${configPlanta.radio}m)`;
         estadoGpsDiv.className = 'info error';
       }
     },
-    (error) => {
-      console.error(error);
-      estadoGpsDiv.textContent = 'No se pudo obtener la ubicación. Activa el GPS y permite el acceso.';
+    err => {
+      estadoGpsDiv.textContent = 'Error al obtener ubicación';
       estadoGpsDiv.className = 'info error';
     },
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0,
-    }
+    { enableHighAccuracy: true, timeout: 15000 }
   );
 }
 
-obtenerUbicacion();
-
-// 4. Enviar datos al backend al enviar el formulario
-formRegistro.addEventListener('submit', async (e) => {
+// Enviar registro
+formRegistro.addEventListener('submit', async e => {
   e.preventDefault();
 
-  const nombreOperario = document.getElementById('nombreOperario').value;
-  const tipo = document.getElementById('tipo').value;
-  const lat = latInput.value ? parseFloat(latInput.value) : null;
-  const lng = lngInput.value ? parseFloat(lngInput.value) : null;
+  const datos = {
+    planta: plantaSelect.value,
+    nombreOperario: operarioSelect.value,
+    tipo: tipoSelect.value,
+    lat: parseFloat(latInput.value),
+    lng: parseFloat(lngInput.value),
+    justificacionExtra: justificacionTextarea.value.trim()
+  };
 
-  // Mostrar el div de mensaje (por si está oculto)
-  mensajeRespuestaDiv.style.display = 'block';
-
-  // Validar campos básicos
-  if (!nombreOperario || !tipo) {
-    mensajeRespuestaDiv.textContent = '⚠️ Debes seleccionar el operario y el tipo de registro.';
-    mensajeRespuestaDiv.className = 'info error';
+  if (!datos.planta || !datos.nombreOperario || !datos.tipo || !datos.lat || !datos.lng) {
+    mensajeDiv.textContent = '⚠️ Completa todos los campos';
+    mensajeDiv.className = 'info error';
+    mensajeDiv.style.display = 'block';
     return;
   }
 
-  // Validar que tenga ubicación GPS
-  if (!lat || !lng) {
-    mensajeRespuestaDiv.textContent = '⚠️ No se pudo obtener tu ubicación GPS. Activa el GPS e intenta nuevamente.';
-    mensajeRespuestaDiv.className = 'info error';
-    return;
-  }
-
-  // VALIDACIÓN FRONTEND: Verificar que esté dentro de la zona
-  const distancia = distanciaMetros(lat, lng, PLANTA_LAT, PLANTA_LNG);
-  
-  if (distancia > RADIO_PERMITIDO_METROS) {
-    mensajeRespuestaDiv.textContent = `🚫 REGISTRO DENEGADO: Debes estar en la zona de trabajo para registrar tu ${tipo}. Estás a ${distancia.toFixed(0)} metros de la planta (máximo permitido: ${RADIO_PERMITIDO_METROS}m).`;
-    mensajeRespuestaDiv.className = 'info error';
-    mensajeRespuestaDiv.style.fontSize = '16px';
-    mensajeRespuestaDiv.style.fontWeight = 'bold';
-    mensajeRespuestaDiv.style.padding = '20px';
-    return;
-  }
-
-  const datos = { nombreOperario, tipo, lat, lng };
-
-  // Mostrar mensaje de carga
-  mensajeRespuestaDiv.textContent = '⏳ Registrando...';
-  mensajeRespuestaDiv.className = 'info';
-  mensajeRespuestaDiv.style.fontSize = '14px';
+  mensajeDiv.textContent = '⏳ Registrando...';
+  mensajeDiv.className = 'info';
+  mensajeDiv.style.display = 'block';
 
   try {
-    const respuesta = await fetch(`${API_URL}/api/registro`, {
+    const resp = await fetch(`${API_URL}/api/registro`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(datos),
+      body: JSON.stringify(datos)
     });
 
-    const json = await respuesta.json();
+    const json = await resp.json();
 
-    if (!respuesta.ok) {
-      mensajeRespuestaDiv.textContent = '❌ ' + (json.mensaje || 'Error al registrar. Intenta de nuevo.');
-      mensajeRespuestaDiv.className = 'info error';
-      mensajeRespuestaDiv.style.fontSize = '16px';
-      mensajeRespuestaDiv.style.fontWeight = 'bold';
+    if (!resp.ok) {
+      mensajeDiv.textContent = '❌ ' + json.mensaje;
+      mensajeDiv.className = 'info error';
       return;
     }
 
-    // ✅ ÉXITO - MENSAJE GRANDE Y VISIBLE
-    const emoji = tipo === 'ingreso' ? '🟢' : '🔴';
-    mensajeRespuestaDiv.style.display = 'block';
-    mensajeRespuestaDiv.textContent = `${emoji} ¡REGISTRO GUARDADO EXITOSAMENTE!`;
-    mensajeRespuestaDiv.className = 'info ok';
-    mensajeRespuestaDiv.style.fontSize = '20px';
-    mensajeRespuestaDiv.style.fontWeight = 'bold';
-    mensajeRespuestaDiv.style.textAlign = 'center';
-    mensajeRespuestaDiv.style.padding = '25px';
+    mensajeDiv.textContent = `✅ ¡REGISTRO EXITOSO!${json.turno ? ` (Turno: ${json.turno})` : ''}`;
+    mensajeDiv.className = 'info ok';
+    mensajeDiv.style.fontSize = '18px';
+    mensajeDiv.style.fontWeight = 'bold';
 
-    // Limpiar el tipo después de 3 segundos
     setTimeout(() => {
-      document.getElementById('tipo').value = '';
-      mensajeRespuestaDiv.style.display = 'none';
-      mensajeRespuestaDiv.style.fontSize = '14px';
-      mensajeRespuestaDiv.style.padding = '12px';
+      tipoSelect.value = '';
+      mensajeDiv.style.display = 'none';
+      mensajeDiv.style.fontSize = '14px';
     }, 3000);
 
   } catch (err) {
-    console.error(err);
-    mensajeRespuestaDiv.textContent = '❌ No se pudo conectar con el servidor. Revisa tu conexión a internet.';
-    mensajeRespuestaDiv.className = 'info error';
-    mensajeRespuestaDiv.style.fontSize = '16px';
-    mensajeRespuestaDiv.style.fontWeight = 'bold';
+    mensajeDiv.textContent = '❌ Error de conexión';
+    mensajeDiv.className = 'info error';
   }
 });
-
-
 
 
 
