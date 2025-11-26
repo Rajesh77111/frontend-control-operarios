@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Control de ingreso y salida - EMPUVILLA</title>
+  <title>Control de Operarios - EMPUVILLA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     * {
@@ -29,7 +29,7 @@
 
     .contenedor {
       width: 100%;
-      max-width: 450px;
+      max-width: 500px;
       background: #ffffff;
       padding: 30px;
       border-radius: 20px;
@@ -84,7 +84,7 @@
       margin-bottom: 5px;
     }
 
-    select, input[type="text"] {
+    select, input[type="text"], textarea {
       width: 100%;
       padding: 12px 15px;
       margin-top: 5px;
@@ -93,9 +93,10 @@
       font-size: 15px;
       transition: all 0.3s ease;
       background-color: #f8fafc;
+      font-family: inherit;
     }
 
-    select:focus, input[type="text"]:focus {
+    select:focus, input[type="text"]:focus, textarea:focus {
       outline: none;
       border-color: #3b82f6;
       background-color: #ffffff;
@@ -106,6 +107,34 @@
       background-color: #f1f5f9;
       cursor: not-allowed;
       color: #475569;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* Selector de planta destacado */
+    .planta-selector {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 2px solid #0ea5e9;
+    }
+
+    .planta-selector label {
+      color: #0c4a6e;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .planta-selector select {
+      background: white;
+      border: 2px solid #0ea5e9;
+      font-weight: 600;
+      font-size: 16px;
+      color: #0c4a6e;
     }
 
     button {
@@ -164,6 +193,10 @@
       min-height: 20px;
     }
 
+    .oculto {
+      display: none;
+    }
+
     .footer {
       text-align: center;
       padding: 20px;
@@ -182,7 +215,6 @@
       color: #dbeafe;
     }
 
-    /* Responsive */
     @media (max-width: 480px) {
       .contenedor {
         padding: 20px;
@@ -209,13 +241,19 @@
       <p class="subtitulo">Sistema de Registro de Ingreso y Salida</p>
 
       <form id="formRegistro">
+        <!-- SELECTOR DE PLANTA -->
+        <div class="planta-selector">
+          <label for="planta">🏭 Selecciona la Planta</label>
+          <select id="planta" required>
+            <option value="">Seleccione...</option>
+            <option value="PTAP">PTAP - Planta de Tratamiento de Agua Potable</option>
+            <option value="PTAR">PTAR - Planta de Tratamiento de Aguas Residuales</option>
+          </select>
+        </div>
+
         <label for="nombreOperario">Operario</label>
-        <select id="nombreOperario" required>
-          <option value="">Seleccione...</option>
-          <option value="Hernan Aragon">Hernan Aragon</option>
-          <option value="Rossa Viafara">Rossa Viafara</option>
-          <option value="Jaiver Casaran">Jaiver Casaran</option>
-          <option value="Arnoldo Camacho">Arnoldo Camacho</option>
+        <select id="nombreOperario" required disabled>
+          <option value="">Primero selecciona una planta...</option>
         </select>
 
         <label for="tipo">Tipo de registro</label>
@@ -225,23 +263,20 @@
           <option value="salida">Salida</option>
         </select>
 
+        <!-- Campo de justificación para horas extra (PTAP) -->
+        <label id="labelJustificacion" for="justificacionExtra" class="oculto">
+          Justificación de horas extra
+        </label>
+        <textarea id="justificacionExtra" class="oculto"
+                  placeholder="Explica la razón de las horas extra (trabajo adicional, emergencia, etc.)"></textarea>
 
-<label id="labelJustificacion" for="justificacionExtra" style="display:none; margin-top:15px;">
-  Justificación de horas extra
-</label>
-<textarea id="justificacionExtra" rows="3" 
-          style="display:none; width:100%; padding:10px; margin-top:5px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px; font-family:inherit;"
-          placeholder="Explica la razón de las horas extra (trabajo adicional, emergencia, etc.)"></textarea>
-
-
-        
         <label>Hora actual</label>
         <input type="text" id="horaActual" readonly />
 
         <label>Estado de ubicación (GPS)</label>
         <div id="estadoGps" class="info">Solicitando ubicación...</div>
 
-        <!-- Campos ocultos donde guardamos lat y lng -->
+        <!-- Campos ocultos -->
         <input type="hidden" id="lat" />
         <input type="hidden" id="lng" />
 
@@ -261,4 +296,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
