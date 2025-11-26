@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Panel de Reportes - EMPUVILLA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-   <style>
+  <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #0f172a;
@@ -14,7 +14,7 @@
     }
 
     .contenedor {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 0 auto;
       background: #111827;
       border-radius: 16px;
@@ -26,6 +26,13 @@
       margin-top: 0;
       font-size: 22px;
       margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: 18px;
+      color: #60a5fa;
+      margin-top: 20px;
+      margin-bottom: 15px;
     }
 
     .subtitulo {
@@ -41,8 +48,7 @@
       font-weight: 600;
     }
 
-    input,
-    select {
+    input, select, textarea {
       width: 100%;
       padding: 8px 10px;
       margin-top: 4px;
@@ -51,6 +57,12 @@
       background: #020617;
       color: #e5e7eb;
       font-size: 14px;
+      font-family: inherit;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
     }
 
     button {
@@ -62,10 +74,28 @@
       color: white;
       font-weight: 600;
       cursor: pointer;
+      font-size: 14px;
     }
 
     button:hover {
       background: #1d4ed8;
+    }
+
+    .btn-danger {
+      background: #b91c1c;
+      margin-left: 8px;
+    }
+
+    .btn-danger:hover {
+      background: #991b1b;
+    }
+
+    .btn-secondary {
+      background: #6b7280;
+    }
+
+    .btn-secondary:hover {
+      background: #4b5563;
     }
 
     .seccion {
@@ -90,15 +120,15 @@
       font-size: 13px;
     }
 
-    th,
-    td {
+    th, td {
       border: 1px solid #374151;
-      padding: 6px 8px;
-      text-align: center;
+      padding: 8px;
+      text-align: left;
     }
 
     th {
       background: #1f2937;
+      font-weight: 600;
     }
 
     .footer {
@@ -107,8 +137,6 @@
       color: #9ca3af;
       text-align: center;
     }
-
-    /* === HEADER ELEGANTE CON LOGO A LA DERECHA === */
 
     .header-panel {
       display: flex;
@@ -155,16 +183,20 @@
       border-radius: 999px;
       background: radial-gradient(circle at 30% 0, rgba(59, 130, 246, 0.25), transparent 60%);
       border: 1px solid rgba(148, 163, 184, 0.5);
-      box-shadow:
-        0 0 0 1px rgba(15, 23, 42, 0.9),
-        0 15px 35px rgba(0, 0, 0, 0.75);
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9), 0 15px 35px rgba(0, 0, 0, 0.75);
     }
 
     .logo-empuvilla {
       display: block;
-      height: 90px; /* sube o baja este valor para cambiar el tamaño del logo */
+      height: 90px;
       width: auto;
       filter: drop-shadow(0 8px 18px rgba(15, 23, 42, 0.9));
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
     }
 
     @media (max-width: 640px) {
@@ -180,31 +212,34 @@
       .header-text h1 {
         font-size: 20px;
       }
+
+      .nav-buttons {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
     }
   </style>
-
 </head>
 <body>
   <div class="contenedor">
-    
-<header class="header-panel">
-  <div class="header-text">
-    <span class="badge-empresa">EMPRESAS PÚBLICAS · EMPUVILLA S.A. E.S.P.</span>
-    <h1>Panel de Reportes PTAP</h1>
-    <p class="subtitulo">Consulta de horas trabajadas por operario y rango de fechas.</p>
-  </div>
+    <header class="header-panel">
+      <div class="header-text">
+        <span class="badge-empresa">EMPRESAS PÚBLICAS · EMPUVILLA S.A. E.S.P.</span>
+        <h1>Panel Administrativo PTAP</h1>
+        <p class="subtitulo">Consulta de horas, gestión de permisos y cálculo de pagos.</p>
+      </div>
 
-  <div class="logo-wrapper">
-    <img src="logo.png" 
-         alt="Logo EMPUVILLA" 
-         class="logo-empuvilla">
-  </div>
-</header>
-
+      <div class="logo-wrapper">
+        <img src="logo.png" alt="Logo EMPUVILLA" class="logo-empuvilla">
+      </div>
+    </header>
 
     <!-- LOGIN -->
     <div id="seccionLogin" class="seccion">
-      <h2>Ingreso al panel</h2>
+      <h2>🔐 Ingreso al panel</h2>
       <label for="usuario">Usuario</label>
       <input type="text" id="usuario" placeholder="Ej: admin">
 
@@ -217,7 +252,11 @@
 
     <!-- FORMULARIO DE REPORTE -->
     <div id="seccionReporte" class="seccion oculto">
-      <h2>Consulta de horas por operario</h2>
+      <div class="nav-buttons">
+        <button id="btnMostrarPermisos" class="btn-secondary">📋 Gestionar Permisos</button>
+      </div>
+
+      <h2>📊 Consulta de horas por operario</h2>
 
       <label for="operarioReporte">Operario</label>
       <select id="operarioReporte">
@@ -235,14 +274,53 @@
       <input type="date" id="fechaHasta">
 
       <button id="btnConsultar">Consultar</button>
- 
-     
-<button id="btnEliminar" style="margin-left:0; margin-top:8px; background:#b91c1c; color:white; border-radius:999px; padding:8px 14px; border:none; cursor:pointer;">
-  Eliminar registros de este rango
-</button>
+      <button id="btnEliminar" class="btn-danger">Eliminar registros de este rango</button>
 
       <div id="resumen" class="resultado"></div>
       <div id="tablaDetalle"></div>
+    </div>
+
+    <!-- SECCIÓN DE PERMISOS (NUEVA) -->
+    <div id="seccionPermisos" class="seccion oculto">
+      <div class="nav-buttons">
+        <button onclick="document.getElementById('seccionPermisos').classList.add('oculto'); document.getElementById('seccionReporte').classList.remove('oculto');" class="btn-secondary">
+          ← Volver a Reportes
+        </button>
+      </div>
+
+      <h2>📋 Gestión de Permisos</h2>
+
+      <div style="background: #1f2937; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; color: #60a5fa; font-size: 16px;">Registrar nuevo permiso</h3>
+
+        <label for="operarioPermiso">Operario</label>
+        <select id="operarioPermiso">
+          <option value="">Seleccione...</option>
+          <option value="Hernan Aragon">Hernan Aragon</option>
+          <option value="Rossa Viafara">Rossa Viafara</option>
+          <option value="Jaiver Casaran">Jaiver Casaran</option>
+          <option value="Arnoldo Camacho">Arnoldo Camacho</option>
+        </select>
+
+        <label for="fechaPermiso">Fecha del permiso</label>
+        <input type="date" id="fechaPermiso">
+
+        <label for="horasPermiso">Horas de permiso</label>
+        <input type="number" id="horasPermiso" step="0.5" min="0.5" placeholder="Ej: 2.5">
+
+        <label for="motivoPermiso">Motivo del permiso</label>
+        <textarea id="motivoPermiso" placeholder="Describe el motivo del permiso (médico, personal, etc.)"></textarea>
+
+        <button id="btnRegistrarPermiso">Registrar Permiso</button>
+        <p id="mensajePermiso" class="resultado"></p>
+      </div>
+
+      <div style="background: #1f2937; padding: 15px; border-radius: 8px;">
+        <h3 style="margin-top: 0; color: #60a5fa; font-size: 16px;">Permisos del mes actual</h3>
+        <div id="listaPermisos">
+          <p style="color: #9ca3af;">Selecciona un operario para ver sus permisos.</p>
+        </div>
+      </div>
     </div>
 
     <div class="footer">
@@ -253,7 +331,6 @@
   <script src="panel.js"></script>
 </body>
 </html>
-
 
 
 
