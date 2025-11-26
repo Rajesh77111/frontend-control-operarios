@@ -261,14 +261,21 @@
 
       <h2>📊 Consulta de horas por operario</h2>
 
-      <label for="operarioReporte">Operario</label>
-      <select id="operarioReporte">
-        <option value="">Seleccione...</option>
-        <option value="Hernan Aragon">Hernan Aragon</option>
-        <option value="Rossa Viafara">Rossa Viafara</option>
-        <option value="Jaiver Casaran">Jaiver Casaran</option>
-        <option value="Arnoldo Camacho">Arnoldo Camacho</option>
-      </select>
+     <h2>📊 Consulta de horas por operario</h2>
+
+<!-- NUEVO: selección de planta -->
+<label for="plantaReporte">Planta</label>
+<select id="plantaReporte">
+  <option value="">Seleccione...</option>
+  <option value="PTAP">PTAP</option>
+  <option value="PTAR">PTAR</option>
+</select>
+
+<label for="operarioReporte">Operario</label>
+<select id="operarioReporte">
+  <option value="">Primero selecciona planta...</option>
+</select>
+
 
       <label for="fechaDesde">Desde (YYYY-MM-DD)</label>
       <input type="date" id="fechaDesde">
@@ -334,3 +341,4 @@
   <script src="panel.js"></script>
 </body>
 </html>
+
