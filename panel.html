@@ -298,19 +298,37 @@
         </button>
       </div>
 
-      <h2>📋 Gestión de Permisos</h2>
+  <h2>📋 Gestión de Permisos</h2>
 
-      <div style="background: #1f2937; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <h3 style="margin-top: 0; color: #60a5fa; font-size: 16px;">Registrar nuevo permiso</h3>
+<div style="background: #1f2937; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+  <h3 style="margin-top: 0; color: #60a5fa; font-size: 16px;">Registrar nuevo permiso</h3>
 
-        <label for="operarioPermiso">Operario</label>
-        <select id="operarioPermiso">
-          <option value="">Seleccione...</option>
-          <option value="Hernan Aragon">Hernan Aragon</option>
-          <option value="Rossa Viafara">Rossa Viafara</option>
-          <option value="Jaiver Casaran">Jaiver Casaran</option>
-          <option value="Arnoldo Camacho">Arnoldo Camacho</option>
-        </select>
+  <!-- NUEVO: selección de planta -->
+  <label for="plantaPermiso">Planta</label>
+  <select id="plantaPermiso">
+    <option value="">Seleccione...</option>
+    <option value="PTAP">PTAP</option>
+    <option value="PTAR">PTAR</option>
+  </select>
+
+  <label for="operarioPermiso">Operario</label>
+  <select id="operarioPermiso">
+    <option value="">Primero selecciona planta...</option>
+  </select>
+
+  <label for="fechaPermiso">Fecha del permiso</label>
+  <input type="date" id="fechaPermiso">
+
+  <label for="horasPermiso">Horas de permiso</label>
+  <input type="number" id="horasPermiso" step="0.5" min="0.5" placeholder="Ej: 2.5">
+
+  <label for="motivoPermiso">Motivo del permiso</label>
+  <textarea id="motivoPermiso" placeholder="Describe el motivo del permiso (médico, personal, etc.)"></textarea>
+
+  <button id="btnRegistrarPermiso">Registrar Permiso</button>
+  <p id="mensajePermiso" class="resultado"></p>
+</div>
+
 
         <label for="fechaPermiso">Fecha del permiso</label>
         <input type="date" id="fechaPermiso">
@@ -341,4 +359,5 @@
   <script src="panel.js"></script>
 </body>
 </html>
+
 
