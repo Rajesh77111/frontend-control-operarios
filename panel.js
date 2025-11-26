@@ -98,12 +98,21 @@ btnConsultar.addEventListener('click', async () => {
     const pagoDominical = data.horasDominicales * valorHoraDominical;
     const pagoTotal = pagoNormal + pagoExtra + pagoDominical;
 
+    // Guardar datos para exportar
+    datosReporteActual = data;
+
     // Calcular horas netas (trabajadas - permisos)
     const horasNetas = data.totalHoras - data.horasPermiso;
 
     // Mostrar resumen
     resumenDiv.style.color = '#e5e7eb';
     resumenDiv.innerHTML = `
+      <div style="text-align: right; margin-bottom: 15px;">
+        <button onclick="exportarExcel()" style="background: #059669; padding: 10px 20px; border-radius: 8px; border: none; color: white; font-weight: 600; cursor: pointer; font-size: 14px;">
+          📥 Exportar a Excel
+        </button>
+      </div>
+    `;
       <div style="background: #1f2937; padding: 20px; border-radius: 12px; margin-bottom: 15px;">
         <h3 style="margin: 0 0 15px 0; color: #60a5fa; font-size: 18px;">📊 Resumen de Horas</h3>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; font-size: 14px;">
