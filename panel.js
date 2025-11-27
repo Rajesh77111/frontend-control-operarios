@@ -564,8 +564,9 @@ function generarExcelPTAP(wb, data) {
   const pagoExtra = data.horasExtra * valorHoraExtra;
   const pagoDominical = data.horasDominicales * valorHoraDominical;
   const pagoTotal = pagoNormal + pagoExtra + pagoDominical;
+  const horasNetas = (data.totalHoras - data.horasPermiso).toFixed(2);
 
-  // HOJA 1: RESUMEN
+  // ================= HOJA 1: RESUMEN =================
   const resumen = [
     ['EMPUVILLA S.A. E.S.P. - PTAP'],
     ['REPORTE DE HORAS TRABAJADAS Y LIQUIDACIÓN'],
@@ -584,7 +585,7 @@ function generarExcelPTAP(wb, data) {
     ['Horas extra', data.horasExtra],
     ['Horas dominicales', data.horasDominicales],
     ['Horas permiso', data.horasPermiso],
-    ['Horas netas', (data.totalHoras - data.horasPermiso).toFixed(2)],
+    ['Horas netas', horasNetas],
     [],
     ['LIQUIDACIÓN'],
     ['Concepto', 'Horas', 'Valor/hora', 'Subtotal'],
@@ -596,13 +597,79 @@ function generarExcelPTAP(wb, data) {
   ];
 
   const wsResumen = XLSX.utils.aoa_to_sheet(resumen);
-  wsResumen['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 20 }, { wch: 20 }];
+
+  // Ancho de columnas
+  wsResumen['!cols'] = [
+    { wch: 35 },
+    { wch: 20 },
+    { wch: 18 },
+    { wch: 18 },
+  ];
+
+  // Unir celdas para títulos y secciones
+  wsResumen['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // A1:D1
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }, // A2:D2
+    { s: { r: 3, c: 0 }, e: { r: 3, c: 3 } }, // "INFORMACIÓN GENERAL"
+    { s: { r: 10, c: 0 }, e: { r: 10, c: 3 } }, // "RESUMEN DE HORAS"
+    { s: { r: 19, c: 0 }, e: { r: 19, c: 3 } }, // "LIQUIDACIÓN"
+  ];
+
+  // Helper para aplicar estilo a una celda
+  function setCellStyle(ws, addr, style) {
+    if (!ws[addr]) return;
+    ws[addr].s = Object.assign({}, ws[addr].s || {}, style);
+  }
+
+  // Estilos base
+  const tituloPrincipal = {
+    font: { bold: true, sz: 16, color: { rgb: 'FFFFFF' } },
+    fill: { patternType: 'solid', fgColor: { rgb: '1D4ED8' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+  };
+
+  const tituloSecundario = {
+    font: { bold: true, sz: 12, color: { rgb: 'E5E7EB' } },
+    fill: { patternType: 'solid', fgColor: { rgb: '111827' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+  };
+
+  const encabezadoTabla = {
+    font: { bold: true, color: { rgb: 'FFFFFF' } },
+    fill: { patternType: 'solid', fgColor: { rgb: '0F172A' } },
+    alignment: { horizontal: 'center' },
+  };
+
+  const filaTotal = {
+    font: { bold: true, color: { rgb: 'FFFFFF' } },
+    fill: { patternType: 'solid', fgColor: { rgb: '16A34A' } },
+  };
+
+  // Aplicar estilos títulos
+  setCellStyle(wsResumen, 'A1', tituloPrincipal);
+  setCellStyle(wsResumen, 'A2', tituloSecundario);
+  setCellStyle(wsResumen, 'A4', tituloSecundario);  // INFORMACIÓN GENERAL
+  setCellStyle(wsResumen, 'A11', tituloSecundario); // RESUMEN DE HORAS
+  setCellStyle(wsResumen, 'A20', tituloSecundario); // LIQUIDACIÓN
+
+  // Encabezados de tablas
+  setCellStyle(wsResumen, 'A12', encabezadoTabla);
+  setCellStyle(wsResumen, 'B12', encabezadoTabla);
+  setCellStyle(wsResumen, 'A21', encabezadoTabla);
+  setCellStyle(wsResumen, 'B21', encabezadoTabla);
+  setCellStyle(wsResumen, 'C21', encabezadoTabla);
+  setCellStyle(wsResumen, 'D21', encabezadoTabla);
+
+  // Fila TOTAL A PAGAR (A26:D26 → índice fila 25)
+  setCellStyle(wsResumen, 'A26', filaTotal);
+  setCellStyle(wsResumen, 'D26', filaTotal);
+
   XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
 
-  // HOJA 2: DETALLE DIARIO
+  // ================= HOJA 2: DETALLE DIARIO =================
   if (data.detalle && data.detalle.length > 0) {
     const detalle = [
-      ['DETALLE DIARIO'],
+      ['DETALLE DIARIO - PTAP'],
       ['Operario:', data.operario],
       [],
       ['Fecha', 'Domingo', 'H. Normales', 'H. Extra', 'H. Dominicales', 'Total'],
@@ -616,7 +683,7 @@ function generarExcelPTAP(wb, data) {
         d.horasNormalesDia.toFixed(2),
         d.horasExtraDia.toFixed(2),
         d.horasDominicalesDia.toFixed(2),
-        total.toFixed(2)
+        total.toFixed(2),
       ]);
     }
 
@@ -627,14 +694,44 @@ function generarExcelPTAP(wb, data) {
       data.horasNormales.toFixed(2),
       data.horasExtra.toFixed(2),
       data.horasDominicales.toFixed(2),
-      data.totalHoras.toFixed(2)
+      data.totalHoras.toFixed(2),
     ]);
 
     const wsDetalle = XLSX.utils.aoa_to_sheet(detalle);
-    wsDetalle['!cols'] = [{ wch: 15 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 12 }];
+    wsDetalle['!cols'] = [
+      { wch: 15 },
+      { wch: 10 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 15 },
+      { wch: 12 },
+    ];
+
+    // Merges título
+    wsDetalle['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // A1:F1
+    ];
+
+    // Estilos título y encabezado
+    setCellStyle(wsDetalle, 'A1', tituloPrincipal);
+    setCellStyle(wsDetalle, 'A4', encabezadoTabla);
+    setCellStyle(wsDetalle, 'B4', encabezadoTabla);
+    setCellStyle(wsDetalle, 'C4', encabezadoTabla);
+    setCellStyle(wsDetalle, 'D4', encabezadoTabla);
+    setCellStyle(wsDetalle, 'E4', encabezadoTabla);
+    setCellStyle(wsDetalle, 'F4', encabezadoTabla);
+
+    // Fila de totales (última)
+    const ultimaFila = 4 + data.detalle.length + 2; // 0-based: fila de "TOTALES"
+    const totalRowAddr = ['A', 'B', 'C', 'D', 'E', 'F'].map(
+      (col) => `${col}${ultimaFila + 1}`,
+    );
+    totalRowAddr.forEach((addr) => setCellStyle(wsDetalle, addr, filaTotal));
+
     XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle Diario');
   }
 }
+
 
 function generarExcelPTAR(wb, data) {
   const salarioBase = SALARIOS.PTAR[data.operario] || 0;
@@ -646,8 +743,8 @@ function generarExcelPTAR(wb, data) {
   const pagoExtra = data.horasExtra * valorHoraExtra;
   const pagoNocturno = data.horasNocturnas * valorHoraNocturna;
   const pagoTotal = pagoNormal + pagoExtra + pagoNocturno;
+  const horasNetas = (data.totalHoras - data.horasPermiso).toFixed(2);
 
-  // HOJA 1: RESUMEN
   const resumen = [
     ['EMPUVILLA S.A. E.S.P. - PTAR'],
     ['REPORTE DE HORAS TRABAJADAS Y LIQUIDACIÓN'],
@@ -666,7 +763,7 @@ function generarExcelPTAR(wb, data) {
     ['Horas extra (sobre 45h/sem)', data.horasExtra],
     ['Horas nocturnas (19:00-06:00)', data.horasNocturnas],
     ['Horas permiso', data.horasPermiso],
-    ['Horas netas', (data.totalHoras - data.horasPermiso).toFixed(2)],
+    ['Horas netas', horasNetas],
     [],
     ['LIQUIDACIÓN'],
     ['Concepto', 'Horas', 'Valor/hora', 'Subtotal'],
@@ -678,13 +775,74 @@ function generarExcelPTAR(wb, data) {
   ];
 
   const wsResumen = XLSX.utils.aoa_to_sheet(resumen);
-  wsResumen['!cols'] = [{ wch: 35 }, { wch: 15 }, { wch: 20 }, { wch: 20 }];
+  wsResumen['!cols'] = [
+    { wch: 35 },
+    { wch: 20 },
+    { wch: 20 },
+    { wch: 20 },
+  ];
+
+  // Merges para títulos y secciones
+  wsResumen['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // A1:D1
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }, // A2:D2
+    { s: { r: 3, c: 0 }, e: { r: 3, c: 3 } }, // INFORMACIÓN GENERAL
+    { s: { r: 10, c: 0 }, e: { r: 10, c: 3 } }, // RESUMEN DE HORAS
+    { s: { r: 19, c: 0 }, e: { r: 19, c: 3 } }, // LIQUIDACIÓN
+  ];
+
+  function setCellStyle(ws, addr, style) {
+    if (!ws[addr]) return;
+    ws[addr].s = Object.assign({}, ws[addr].s || {}, style);
+  }
+
+  const tituloPrincipal = {
+    font: { bold: true, sz: 16, color: { rgb: 'FFFFFF' } },
+    fill: { patternType: 'solid', fgColor: { rgb: '1E293B' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+  };
+
+  const tituloSecundario = {
+    font: { bold: true, sz: 12, color: { rgb: 'E5E7EB' } },
+    fill: { patternType: 'solid', fgColor: { rgb: '020617' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+  };
+
+  const encabezadoTabla = {
+    font: { bold: true, color: { rgb: 'FFFFFF' } },
+    fill: { patternType: 'solid', fgColor: { rgb: '0F172A' } },
+    alignment: { horizontal: 'center' },
+  };
+
+  const filaTotal = {
+    font: { bold: true, color: { rgb: 'FFFFFF' } },
+    fill: { patternType: 'solid', fgColor: { rgb: '16A34A' } },
+  };
+
+  // Estilos de títulos y encabezados
+  setCellStyle(wsResumen, 'A1', tituloPrincipal);
+  setCellStyle(wsResumen, 'A2', tituloSecundario);
+  setCellStyle(wsResumen, 'A4', tituloSecundario);
+  setCellStyle(wsResumen, 'A11', tituloSecundario);
+  setCellStyle(wsResumen, 'A20', tituloSecundario);
+
+  setCellStyle(wsResumen, 'A12', encabezadoTabla);
+  setCellStyle(wsResumen, 'B12', encabezadoTabla);
+  setCellStyle(wsResumen, 'A21', encabezadoTabla);
+  setCellStyle(wsResumen, 'B21', encabezadoTabla);
+  setCellStyle(wsResumen, 'C21', encabezadoTabla);
+  setCellStyle(wsResumen, 'D21', encabezadoTabla);
+
+  // Total a pagar
+  setCellStyle(wsResumen, 'A26', filaTotal);
+  setCellStyle(wsResumen, 'D26', filaTotal);
+
   XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
 
-  // HOJA 2: DETALLE SEMANAL
+  // ================= HOJA 2: DETALLE SEMANAL =================
   if (data.detalleSemanas && data.detalleSemanas.length > 0) {
     const detalle = [
-      ['DETALLE POR SEMANA'],
+      ['DETALLE POR SEMANA - PTAR'],
       ['Operario:', data.operario],
       ['Límite semanal: 45 horas'],
       [],
@@ -697,7 +855,7 @@ function generarExcelPTAR(wb, data) {
         sem.horasTotales.toFixed(2),
         sem.horasNormales.toFixed(2),
         sem.horasExtra.toFixed(2),
-        sem.horasNocturnas.toFixed(2)
+        sem.horasNocturnas.toFixed(2),
       ]);
     }
 
@@ -707,11 +865,36 @@ function generarExcelPTAR(wb, data) {
       data.totalHoras.toFixed(2),
       data.horasNormales.toFixed(2),
       data.horasExtra.toFixed(2),
-      data.horasNocturnas.toFixed(2)
+      data.horasNocturnas.toFixed(2),
     ]);
 
     const wsDetalle = XLSX.utils.aoa_to_sheet(detalle);
-    wsDetalle['!cols'] = [{ wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
+    wsDetalle['!cols'] = [
+      { wch: 25 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 12 },
+    ];
+
+    wsDetalle['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // A1:E1
+    ];
+
+    // Reutilizamos estilos
+    setCellStyle(wsDetalle, 'A1', tituloPrincipal);
+    setCellStyle(wsDetalle, 'A5', encabezadoTabla);
+    setCellStyle(wsDetalle, 'B5', encabezadoTabla);
+    setCellStyle(wsDetalle, 'C5', encabezadoTabla);
+    setCellStyle(wsDetalle, 'D5', encabezadoTabla);
+    setCellStyle(wsDetalle, 'E5', encabezadoTabla);
+
+    // Fila de totales (al final)
+    const ultimaFila = 5 + data.detalleSemanas.length + 2; // línea "TOTALES"
+    ['A', 'B', 'C', 'D', 'E'].forEach((col) =>
+      setCellStyle(wsDetalle, `${col}${ultimaFila + 1}`, filaTotal),
+    );
+
     XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle Semanal');
   }
 }
@@ -724,3 +907,4 @@ function mostrarMensajeExito(texto) {
   
   setTimeout(() => mensaje.remove(), 3000);
 }
+
